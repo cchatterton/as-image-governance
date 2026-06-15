@@ -2,6 +2,14 @@
     max-width: 760px;
 }
 
+.media-modal .media-toolbar-secondary {
+    display: flex;
+}
+
+.media-modal label {
+    display: none;
+}
+
 .asig-authority-label-list {
     margin: 0;
 }

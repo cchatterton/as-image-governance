@@ -2,6 +2,12 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.13 - 2026-06-15
+
+- Forced WordPress media-modal secondary toolbar filters to use flex layout.
+- Hid media-modal filter labels as requested.
+- Fixed media-modal governance filters by reading the raw attachment query request before WordPress strips custom query keys.
+
 ## 0.1.12 - 2026-06-15
 
 - Fixed updater behavior so failed or invalid GitHub release lookups no longer write a false `no_update` result.

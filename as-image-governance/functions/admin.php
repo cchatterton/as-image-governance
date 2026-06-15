@@ -341,18 +341,27 @@ function asig_filter_media_library(WP_Query $query): void
 
 function asig_filter_media_modal_attachments(array $query): array
 {
-    return asig_apply_governance_attachment_filters($query, $query);
+    $request = array();
+
+    if (isset($_REQUEST['query']) && is_array($_REQUEST['query'])) {
+        $request = wp_unslash($_REQUEST['query']);
+    }
+
+    return asig_apply_governance_attachment_filters($query, $request);
 }
 
 function asig_apply_governance_attachment_filters(array $query, array $request): array
 {
     $meta_query = isset($query['meta_query']) && is_array($query['meta_query']) ? $query['meta_query'] : array();
     $tax_query = isset($query['tax_query']) && is_array($query['tax_query']) ? $query['tax_query'] : array();
-    $authority_level = isset($request['asig_authority_level']) ? asig_sanitize_authority_level(wp_unslash($request['asig_authority_level'])) : '';
-    $missing_filter = isset($request['asig_missing']) ? sanitize_text_field(wp_unslash($request['asig_missing'])) : '';
-    $collection = isset($request['asig_collection']) ? absint($request['asig_collection']) : 0;
+    $raw_authority_level = isset($request['asig_authority_level']) && is_scalar($request['asig_authority_level']) ? wp_unslash($request['asig_authority_level']) : '';
+    $raw_missing_filter = isset($request['asig_missing']) && is_scalar($request['asig_missing']) ? wp_unslash($request['asig_missing']) : '';
+    $raw_collection = isset($request['asig_collection']) && is_scalar($request['asig_collection']) ? wp_unslash($request['asig_collection']) : 0;
+    $authority_level = asig_sanitize_authority_level($raw_authority_level);
+    $missing_filter = sanitize_text_field($raw_missing_filter);
+    $collection = absint($raw_collection);
 
-    if (isset($request['asig_authority_level']) && '' !== (string) $request['asig_authority_level']) {
+    if ('' !== (string) $raw_authority_level) {
         $meta_query[] = asig_get_authority_meta_query($authority_level);
     }
 
