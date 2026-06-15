@@ -16,6 +16,7 @@ final class ASIG_GitHub_Updater
     private const SLUG = 'as-image-governance';
     private const ASSET_NAME = 'as-image-governance.zip';
     private const RELEASE_TRANSIENT = 'asig_github_latest_release';
+    private const ERROR_TRANSIENT = 'asig_github_latest_release_error';
     private const GITHUB_URL = 'https://github.com/cchatterton/as-image-governance';
     private const REQUIRES = '6.0';
     private const REQUIRES_PHP = '8.1';
@@ -144,15 +145,43 @@ final class ASIG_GitHub_Updater
             )
         );
 
-        if (is_wp_error($response) || 200 !== wp_remote_retrieve_response_code($response)) {
-            set_site_transient(self::RELEASE_TRANSIENT, array('asig_error' => true), 30 * MINUTE_IN_SECONDS);
+        if (is_wp_error($response)) {
+            self::record_release_error(
+                array(
+                    'type'    => 'wp_error',
+                    'message' => $response->get_error_message(),
+                )
+            );
+            delete_site_transient(self::RELEASE_TRANSIENT);
+            return false;
+        }
+
+        $response_code = wp_remote_retrieve_response_code($response);
+
+        if (200 !== $response_code) {
+            self::record_release_error(
+                array(
+                    'type'    => 'http_error',
+                    'code'    => $response_code,
+                    'message' => wp_remote_retrieve_response_message($response),
+                    'body'    => substr(wp_remote_retrieve_body($response), 0, 500),
+                )
+            );
+            delete_site_transient(self::RELEASE_TRANSIENT);
             return false;
         }
 
         $release = json_decode(wp_remote_retrieve_body($response), true);
 
         if (!is_array($release)) {
-            set_site_transient(self::RELEASE_TRANSIENT, array('asig_error' => true), 30 * MINUTE_IN_SECONDS);
+            self::record_release_error(
+                array(
+                    'type'    => 'json_error',
+                    'message' => function_exists('json_last_error_msg') ? json_last_error_msg() : 'Invalid JSON',
+                    'body'    => substr(wp_remote_retrieve_body($response), 0, 500),
+                )
+            );
+            delete_site_transient(self::RELEASE_TRANSIENT);
             return false;
         }
 
@@ -162,6 +191,7 @@ final class ASIG_GitHub_Updater
         $release['asig_cached_at'] = time();
 
         set_site_transient(self::RELEASE_TRANSIENT, $release, $cache_ttl);
+        delete_site_transient(self::ERROR_TRANSIENT);
 
         return $release;
     }
@@ -169,6 +199,13 @@ final class ASIG_GitHub_Updater
     public static function clear_release_cache(): void
     {
         delete_site_transient(self::RELEASE_TRANSIENT);
+        delete_site_transient(self::ERROR_TRANSIENT);
+    }
+
+    private static function record_release_error(array $error): void
+    {
+        $error['checked_at'] = time();
+        set_site_transient(self::ERROR_TRANSIENT, $error, 10 * MINUTE_IN_SECONDS);
     }
 
     private static function get_release_version($release): string

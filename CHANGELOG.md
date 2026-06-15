@@ -2,6 +2,12 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.18 - 2026-06-15
+
+- Stopped storing failed GitHub lookups in the release cache used for update checks.
+- Added short-lived diagnostic storage for GitHub updater HTTP, WordPress, and JSON errors.
+- Cleared updater diagnostics together with release cache clears.
+
 ## 0.1.17 - 2026-06-15
 
 - Anchored governance modal help tooltips to the help icon so they do not spill out of the modal.
