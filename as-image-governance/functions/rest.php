@@ -137,8 +137,9 @@ function asig_rest_save_attachment_governance(WP_REST_Request $request): WP_REST
 
     update_post_meta($attachment_id, '_ig_source', sanitize_text_field((string) $request->get_param('source')));
     update_post_meta($attachment_id, '_ig_authority_level', asig_sanitize_authority_level($request->get_param('authority_level')));
-    update_post_meta($attachment_id, '_ig_authority_notes', sanitize_textarea_field((string) $request->get_param('authority_notes')));
-    update_post_meta($attachment_id, '_ig_attribution', sanitize_textarea_field((string) $request->get_param('attribution')));
+    update_post_meta($attachment_id, '_ig_expiry_date', asig_sanitize_expiry_date($request->get_param('expiry_date')));
+    update_post_meta($attachment_id, '_ig_authority_notes', sanitize_text_field((string) $request->get_param('authority_notes')));
+    update_post_meta($attachment_id, '_ig_attribution', sanitize_text_field((string) $request->get_param('attribution')));
 
     $collections = $request->get_param('collections');
 
@@ -147,7 +148,7 @@ function asig_rest_save_attachment_governance(WP_REST_Request $request): WP_REST
     }
 
     asig_rest_save_term_names($attachment_id, 'ig_image_color', $request->get_param('image_colors'));
-    asig_rest_save_term_names($attachment_id, 'ig_subject_matter', $request->get_param('subject_matter'));
+    asig_rest_save_term_names($attachment_id, 'ig_image_tag', $request->get_param('image_tags'));
 
     return rest_ensure_response(asig_prepare_attachment_governance_response($attachment_id));
 }
@@ -159,12 +160,12 @@ function asig_rest_save_term_names(int $attachment_id, string $taxonomy, mixed $
     }
 
     if (is_array($value)) {
-        $terms = array_map('sanitize_text_field', array_map('strval', $value));
+        $terms = asig_normalize_tag_terms($value);
     } else {
-        $terms = array_map('trim', explode(',', sanitize_text_field((string) $value)));
+        $terms = asig_normalize_tag_terms($value);
     }
 
-    wp_set_object_terms($attachment_id, array_filter($terms), $taxonomy, false);
+    wp_set_object_terms($attachment_id, $terms, $taxonomy, false);
 }
 
 function asig_rest_get_pending_upload(): WP_REST_Response
@@ -206,7 +207,7 @@ function asig_prepare_attachment_governance_response(int $attachment_id): array
     $metadata['attachment_id'] = $attachment_id;
     $metadata['collections'] = asig_get_attachment_collection_ids($attachment_id);
     $metadata['image_colors'] = asig_get_attachment_term_names($attachment_id, 'ig_image_color');
-    $metadata['subject_matter'] = asig_get_attachment_term_names($attachment_id, 'ig_subject_matter');
+    $metadata['image_tags'] = asig_get_attachment_term_names($attachment_id, 'ig_image_tag');
     $metadata['usage_count'] = asig_get_attachment_usage_count($attachment_id);
     $metadata['needs_governance'] = '' === trim($metadata['source'])
         || '' === trim($metadata['attribution'])

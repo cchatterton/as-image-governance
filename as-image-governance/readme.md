@@ -1,7 +1,7 @@
 # Image Governance
 
 Author: AlphaSys  
-Version: 0.1.15  
+Version: 0.1.16  
 Status: MVP  
 
 ## Purpose
@@ -10,10 +10,10 @@ Image Governance helps WordPress site owners record where images came from, what
 
 ## Key Features
 
-- Governance fields on image attachments: Source, Authority Level, Authority Notes, and Attribution.
+- Governance fields on image attachments: Source, Authority Level, Expiry, Authority Notes, and Attribution.
 - Media Library columns and filters for governance review.
 - Flat image collections using the `ig_collection` attachment taxonomy.
-- Image color and subject matter attachment tag taxonomies.
+- Image Colors and Image Tags attachment tag taxonomies.
 - Bulk authority and collection assignment in the Media Library.
 - Media Library usage recount for featured images, inline images, galleries, pages, posts, and public custom post types.
 - Settings page for attribution display and scanner behavior.
@@ -48,6 +48,7 @@ as-image-governance/
 ## Important Notes
 
 - The plugin never deletes media files or changes image file paths.
+- Expired images are removed from detected featured image, inline image, and gallery shortcode use by a daily cron cleanup.
 - Governance metadata is retained on deactivation.
 - Uninstall cleanup only runs when the explicit cleanup setting is enabled.
 - The usage scanner is manual and stores results in the `asig_usage_index` option.

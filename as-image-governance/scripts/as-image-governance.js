@@ -11,7 +11,7 @@
     var AsigMissingFilter = null;
     var AsigCollectionFilter = null;
     var AsigImageColorFilter = null;
-    var AsigSubjectMatterFilter = null;
+    var AsigImageTagFilter = null;
 
     function restRequest(url, method, data) {
         return window.fetch(url, {
@@ -345,6 +345,21 @@
         return (tags || []).join(', ');
     }
 
+    function fieldHelp(key) {
+        var tooltips = window.ASIG.strings.tooltips || {};
+        var text = tooltips[key] || '';
+
+        if (!text) {
+            return '';
+        }
+
+        return '<span class="asig-field-help" tabindex="0" aria-label="' + escapeHtml(text) + '"><span class="dashicons dashicons-editor-help"></span><span class="asig-field-help__tip">' + escapeHtml(text) + '</span></span>';
+    }
+
+    function fieldLabel(label, key) {
+        return '<span class="asig-field-label">' + escapeHtml(label) + fieldHelp(key) + '</span>';
+    }
+
     function openGovernanceModal(details) {
         activeAttachmentId = details.attachment_id;
         $('.asig-governance-modal').remove();
@@ -359,13 +374,14 @@
                     '<h2>' + escapeHtml(window.ASIG.strings.modalTitle) + '</h2>',
                     '<p>' + escapeHtml(window.ASIG.strings.modalIntro) + '</p>',
                     '<form>',
-                        '<label>' + escapeHtml(window.ASIG.strings.source) + '<input type="text" name="source" value="' + escapeHtml(details.source || '') + '"></label>',
-                        '<label>' + escapeHtml(window.ASIG.strings.authorityLevel) + '<select name="authority_level">' + buildAuthorityOptions(details.authority_level) + '</select></label>',
-                        '<label>' + escapeHtml(window.ASIG.strings.authorityNotes) + '<textarea name="authority_notes" rows="4">' + escapeHtml(details.authority_notes || '') + '</textarea></label>',
-                        '<label>' + escapeHtml(window.ASIG.strings.attribution) + '<textarea name="attribution" rows="4">' + escapeHtml(details.attribution || '') + '</textarea></label>',
-                        '<label>' + escapeHtml(window.ASIG.strings.imageColors) + '<input type="text" name="image_colors" value="' + escapeHtml(buildTagValue(details.image_colors)) + '"></label>',
-                        '<label>' + escapeHtml(window.ASIG.strings.subjectMatter) + '<input type="text" name="subject_matter" value="' + escapeHtml(buildTagValue(details.subject_matter)) + '"></label>',
-                        '<fieldset><legend>' + escapeHtml(window.ASIG.strings.collections) + '</legend>' + buildCollectionOptions(details.collections) + '</fieldset>',
+                        '<label>' + fieldLabel(window.ASIG.strings.source, 'source') + '<input type="text" name="source" value="' + escapeHtml(details.source || '') + '"></label>',
+                        '<label>' + fieldLabel(window.ASIG.strings.authorityLevel, 'authorityLevel') + '<select name="authority_level">' + buildAuthorityOptions(details.authority_level) + '</select></label>',
+                        '<label>' + fieldLabel(window.ASIG.strings.expiry, 'expiry') + '<input type="date" name="expiry_date" value="' + escapeHtml(details.expiry_date || '') + '"></label>',
+                        '<label>' + fieldLabel(window.ASIG.strings.authorityNotes, 'authorityNotes') + '<input type="text" name="authority_notes" value="' + escapeHtml(details.authority_notes || '') + '"></label>',
+                        '<label>' + fieldLabel(window.ASIG.strings.attribution, 'attribution') + '<input type="text" name="attribution" value="' + escapeHtml(details.attribution || '') + '"></label>',
+                        '<label>' + fieldLabel(window.ASIG.strings.imageColors, 'imageColors') + '<input type="text" name="image_colors" value="' + escapeHtml(buildTagValue(details.image_colors)) + '"></label>',
+                        '<label>' + fieldLabel(window.ASIG.strings.imageTags, 'imageTags') + '<input type="text" name="image_tags" value="' + escapeHtml(buildTagValue(details.image_tags)) + '"></label>',
+                        '<fieldset><legend>' + fieldLabel(window.ASIG.strings.collections, 'collections') + '</legend>' + buildCollectionOptions(details.collections) + '</fieldset>',
                         '<div class="asig-governance-modal__actions">',
                             '<button type="submit" class="button button-primary">' + escapeHtml(window.ASIG.strings.save) + '</button>',
                         '</div>',
@@ -398,10 +414,11 @@
             restRequest(attachmentDetailsUrl(activeAttachmentId), 'PUT', {
                 source: $form.find('[name="source"]').val(),
                 authority_level: $form.find('[name="authority_level"]').val(),
+                expiry_date: $form.find('[name="expiry_date"]').val(),
                 authority_notes: $form.find('[name="authority_notes"]').val(),
                 attribution: $form.find('[name="attribution"]').val(),
                 image_colors: $form.find('[name="image_colors"]').val(),
-                subject_matter: $form.find('[name="subject_matter"]').val(),
+                image_tags: $form.find('[name="image_tags"]').val(),
                 collections: collections
             }).then(function () {
                 $form.find('.asig-governance-modal__status').text(window.ASIG.strings.saved);
@@ -446,7 +463,7 @@
         AsigMissingFilter = createMissingFilter();
         AsigCollectionFilter = createCollectionFilter();
         AsigImageColorFilter = createTermFilter('asig-image-color-filter', window.ASIG.strings.allImageColors, 'asig_image_color', window.ASIG.imageColors || []);
-        AsigSubjectMatterFilter = createTermFilter('asig-subject-matter-filter', window.ASIG.strings.allSubjectMatter, 'asig_subject_matter', window.ASIG.subjectMatter || []);
+        AsigImageTagFilter = createTermFilter('asig-image-tag-filter', window.ASIG.strings.allImageTags, 'asig_image_tag', window.ASIG.imageTags || []);
 
         window.wp.media.view.AttachmentsBrowser.prototype.asigFiltersAdded = true;
 
@@ -494,8 +511,8 @@
             );
 
             this.toolbar.set(
-                'asigSubjectMatterFilter',
-                new AsigSubjectMatterFilter({
+                'asigImageTagFilter',
+                new AsigImageTagFilter({
                     controller: this.controller,
                     model: this.collection.props,
                     priority: -71

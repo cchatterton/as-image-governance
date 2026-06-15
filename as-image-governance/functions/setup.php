@@ -12,12 +12,15 @@ if (!defined('ABSPATH')) {
 add_action('init', 'asig_register_collection_taxonomy');
 add_filter('attachment_fields_to_edit', 'asig_add_attachment_fields', 10, 2);
 add_filter('attachment_fields_to_save', 'asig_save_attachment_fields', 10, 2);
+add_filter('pre_insert_term', 'asig_normalize_inserted_image_term', 10, 2);
 add_filter('the_content', 'asig_append_attribution_page_content', 20);
 add_action('wp_footer', 'asig_render_footer_attribution_link');
 add_action('save_post', 'asig_update_usage_for_saved_post', 20, 2);
 add_action('delete_post', 'asig_remove_deleted_post_usage');
 add_filter('wp_handle_upload_prefilter', 'asig_prevent_duplicate_image_upload');
 add_action('add_attachment', 'asig_handle_new_attachment_upload');
+add_action('init', 'asig_ensure_expiry_cleanup_scheduled');
+add_action('asig_daily_expiry_cleanup', 'asig_remove_expired_images_from_use');
 
 function asig_register_collection_taxonomy(): void
 {
@@ -88,23 +91,23 @@ function asig_register_collection_taxonomy(): void
     );
 
     register_taxonomy(
-        'ig_subject_matter',
+        'ig_image_tag',
         'attachment',
         array(
             'labels'                => array(
-                'name'                       => __('Image Subject Matter', 'as-image-governance'),
-                'singular_name'              => __('Image Subject Matter', 'as-image-governance'),
-                'search_items'               => __('Search Image Subject Matter', 'as-image-governance'),
-                'popular_items'              => __('Popular Image Subject Matter', 'as-image-governance'),
-                'all_items'                  => __('All Image Subject Matter', 'as-image-governance'),
-                'edit_item'                  => __('Edit Image Subject Matter', 'as-image-governance'),
-                'update_item'                => __('Update Image Subject Matter', 'as-image-governance'),
-                'add_new_item'               => __('Add New Image Subject Matter', 'as-image-governance'),
-                'new_item_name'              => __('New Image Subject Matter Name', 'as-image-governance'),
-                'separate_items_with_commas' => __('Separate subject matter tags with commas', 'as-image-governance'),
-                'add_or_remove_items'        => __('Add or remove subject matter tags', 'as-image-governance'),
-                'choose_from_most_used'      => __('Choose from the most used subject matter tags', 'as-image-governance'),
-                'menu_name'                  => __('Image Subject Matter', 'as-image-governance'),
+                'name'                       => __('Image Tags', 'as-image-governance'),
+                'singular_name'              => __('Image Tag', 'as-image-governance'),
+                'search_items'               => __('Search Image Tags', 'as-image-governance'),
+                'popular_items'              => __('Popular Image Tags', 'as-image-governance'),
+                'all_items'                  => __('All Image Tags', 'as-image-governance'),
+                'edit_item'                  => __('Edit Image Tag', 'as-image-governance'),
+                'update_item'                => __('Update Image Tag', 'as-image-governance'),
+                'add_new_item'               => __('Add New Image Tag', 'as-image-governance'),
+                'new_item_name'              => __('New Image Tag Name', 'as-image-governance'),
+                'separate_items_with_commas' => __('Separate image tags with commas', 'as-image-governance'),
+                'add_or_remove_items'        => __('Add or remove image tags', 'as-image-governance'),
+                'choose_from_most_used'      => __('Choose from the most used image tags', 'as-image-governance'),
+                'menu_name'                  => __('Image Tags', 'as-image-governance'),
             ),
             'public'                => false,
             'show_ui'               => true,
@@ -165,9 +168,9 @@ function asig_add_attachment_fields(array $fields, WP_Post $post): array
         'label' => __('Authority Notes', 'as-image-governance'),
         'input' => 'html',
         'html'  => sprintf(
-            '<textarea class="widefat" rows="4" name="attachments[%1$d][_ig_authority_notes]">%2$s</textarea>',
+            '<input type="text" class="widefat" name="attachments[%1$d][_ig_authority_notes]" value="%2$s">',
             (int) $post->ID,
-            esc_textarea($metadata['authority_notes'])
+            esc_attr($metadata['authority_notes'])
         ),
     );
 
@@ -175,9 +178,19 @@ function asig_add_attachment_fields(array $fields, WP_Post $post): array
         'label' => __('Attribution', 'as-image-governance'),
         'input' => 'html',
         'html'  => sprintf(
-            '<textarea class="widefat" rows="4" name="attachments[%1$d][_ig_attribution]">%2$s</textarea>',
+            '<input type="text" class="widefat" name="attachments[%1$d][_ig_attribution]" value="%2$s">',
             (int) $post->ID,
-            esc_textarea($metadata['attribution'])
+            esc_attr($metadata['attribution'])
+        ),
+    );
+
+    $fields['asig_expiry_date'] = array(
+        'label' => __('Expiry', 'as-image-governance'),
+        'input' => 'html',
+        'html'  => sprintf(
+            '<input type="date" class="widefat" name="attachments[%1$d][_ig_expiry_date]" value="%2$s">',
+            (int) $post->ID,
+            esc_attr($metadata['expiry_date'])
         ),
     );
 
@@ -193,10 +206,10 @@ function asig_add_attachment_fields(array $fields, WP_Post $post): array
         'html'  => asig_render_attachment_tag_field((int) $post->ID, 'ig_image_color', 'ig_image_color'),
     );
 
-    $fields['asig_subject_matter'] = array(
-        'label' => __('Subject Matter', 'as-image-governance'),
+    $fields['asig_image_tag'] = array(
+        'label' => __('Image Tags', 'as-image-governance'),
         'input' => 'html',
-        'html'  => asig_render_attachment_tag_field((int) $post->ID, 'ig_subject_matter', 'ig_subject_matter'),
+        'html'  => asig_render_attachment_tag_field((int) $post->ID, 'ig_image_tag', 'ig_image_tag'),
     );
 
     $fields['asig_usage'] = array(
@@ -270,7 +283,7 @@ function asig_save_attachment_fields(array $post, array $attachment): array
         return $post;
     }
 
-    $text_fields = array('_ig_source', '_ig_attribution');
+    $text_fields = array('_ig_source', '_ig_attribution', '_ig_authority_notes');
 
     foreach ($text_fields as $field) {
         if (isset($attachment[$field])) {
@@ -282,8 +295,8 @@ function asig_save_attachment_fields(array $post, array $attachment): array
         update_post_meta($attachment_id, '_ig_authority_level', asig_sanitize_authority_level($attachment['_ig_authority_level']));
     }
 
-    if (isset($attachment['_ig_authority_notes'])) {
-        update_post_meta($attachment_id, '_ig_authority_notes', sanitize_textarea_field($attachment['_ig_authority_notes']));
+    if (isset($attachment['_ig_expiry_date'])) {
+        update_post_meta($attachment_id, '_ig_expiry_date', asig_sanitize_expiry_date($attachment['_ig_expiry_date']));
     }
 
     if (isset($attachment['ig_collection']) && is_array($attachment['ig_collection'])) {
@@ -292,14 +305,22 @@ function asig_save_attachment_fields(array $post, array $attachment): array
         wp_set_object_terms($attachment_id, array(), 'ig_collection', false);
     }
 
-    foreach (array('ig_image_color', 'ig_subject_matter') as $taxonomy) {
+    foreach (array('ig_image_color', 'ig_image_tag') as $taxonomy) {
         if (isset($attachment[$taxonomy]) && is_scalar($attachment[$taxonomy])) {
-            $terms = array_filter(array_map('trim', explode(',', sanitize_text_field(wp_unslash($attachment[$taxonomy])))));
-            wp_set_object_terms($attachment_id, $terms, $taxonomy, false);
+            wp_set_object_terms($attachment_id, asig_normalize_tag_terms(wp_unslash($attachment[$taxonomy])), $taxonomy, false);
         }
     }
 
     return $post;
+}
+
+function asig_normalize_inserted_image_term($term, string $taxonomy)
+{
+    if (!in_array($taxonomy, array('ig_image_color', 'ig_image_tag'), true) || !is_string($term)) {
+        return $term;
+    }
+
+    return ucfirst(trim($term));
 }
 
 function asig_prevent_duplicate_image_upload(array $file): array
@@ -419,6 +440,124 @@ function asig_get_upload_source_url_from_request(): string
     }
 
     return '';
+}
+
+function asig_schedule_expiry_cleanup(): void
+{
+    if (!wp_next_scheduled('asig_daily_expiry_cleanup')) {
+        wp_schedule_event(time() + HOUR_IN_SECONDS, 'daily', 'asig_daily_expiry_cleanup');
+    }
+}
+
+function asig_clear_expiry_cleanup(): void
+{
+    wp_clear_scheduled_hook('asig_daily_expiry_cleanup');
+}
+
+function asig_ensure_expiry_cleanup_scheduled(): void
+{
+    asig_schedule_expiry_cleanup();
+}
+
+function asig_remove_expired_images_from_use(): void
+{
+    $expired_ids = asig_get_expired_attachment_ids();
+
+    if (!$expired_ids) {
+        return;
+    }
+
+    asig_scan_usage();
+
+    foreach ($expired_ids as $attachment_id) {
+        foreach (asig_get_attachment_usage($attachment_id) as $item) {
+            $post_id = (int) ($item['post_id'] ?? 0);
+
+            if ($post_id) {
+                asig_remove_attachment_from_post_use($attachment_id, $post_id);
+            }
+        }
+
+        update_post_meta($attachment_id, '_ig_expired_removed_at', current_time('mysql'));
+    }
+
+    asig_scan_usage();
+}
+
+function asig_get_expired_attachment_ids(): array
+{
+    $query = new WP_Query(
+        array(
+            'post_type'      => 'attachment',
+            'post_status'    => 'inherit',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'no_found_rows'  => true,
+            'meta_query'     => array(
+                array(
+                    'key'     => '_ig_expiry_date',
+                    'value'   => current_time('Y-m-d'),
+                    'compare' => '<=',
+                    'type'    => 'DATE',
+                ),
+            ),
+        )
+    );
+
+    return array_map('intval', $query->posts);
+}
+
+function asig_remove_attachment_from_post_use(int $attachment_id, int $post_id): void
+{
+    $changed = false;
+
+    if ((int) get_post_thumbnail_id($post_id) === $attachment_id) {
+        delete_post_thumbnail($post_id);
+        $changed = true;
+    }
+
+    $content = (string) get_post_field('post_content', $post_id);
+
+    if ('' !== $content) {
+        $updated_content = asig_remove_attachment_from_content($content, $attachment_id);
+
+        if ($updated_content !== $content) {
+            wp_update_post(
+                array(
+                    'ID'           => $post_id,
+                    'post_content' => $updated_content,
+                )
+            );
+            $changed = true;
+        }
+    }
+
+    if ($changed) {
+        clean_post_cache($post_id);
+    }
+}
+
+function asig_remove_attachment_from_content(string $content, int $attachment_id): string
+{
+    $quoted_id = preg_quote((string) $attachment_id, '/');
+    $content = preg_replace('/<!--\s+wp:image\b[^>]*"id"\s*:\s*' . $quoted_id . '[\s\S]*?<!--\s+\/wp:image\s+-->/i', '', $content) ?? $content;
+    $content = preg_replace('/<figure\b[^>]*>[\s\S]*?wp-image-' . $quoted_id . '[\s\S]*?<\/figure>/i', '', $content) ?? $content;
+    $content = preg_replace('/<img\b[^>]*wp-image-' . $quoted_id . '[^>]*>/i', '', $content) ?? $content;
+
+    return preg_replace_callback(
+        '/\[gallery([^\]]*?)ids=(["\'])([^"\']+)\2([^\]]*?)\]/i',
+        static function (array $matches) use ($attachment_id): string {
+            $ids = array_filter(array_map('absint', explode(',', $matches[3])));
+            $ids = array_values(array_filter($ids, static fn(int $id): bool => $id !== $attachment_id));
+
+            if (!$ids) {
+                return '';
+            }
+
+            return '[gallery' . $matches[1] . 'ids=' . $matches[2] . implode(',', $ids) . $matches[2] . $matches[4] . ']';
+        },
+        $content
+    ) ?? $content;
 }
 
 function asig_update_usage_for_saved_post(int $post_id, WP_Post $post): void

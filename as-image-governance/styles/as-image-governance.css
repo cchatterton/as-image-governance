@@ -154,6 +154,7 @@
 }
 
 .asig-governance-modal input[type="text"],
+.asig-governance-modal input[type="date"],
 .asig-governance-modal select,
 .asig-governance-modal textarea {
     width: 100%;
@@ -164,6 +165,51 @@
     display: block;
     margin: 0 0 6px;
     font-weight: 400;
+}
+
+.asig-field-label {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.asig-field-help {
+    position: relative;
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+    align-items: center;
+    justify-content: center;
+    color: #2271b1;
+    cursor: help;
+}
+
+.asig-field-help .dashicons {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    line-height: 16px;
+}
+
+.asig-field-help__tip {
+    position: absolute;
+    z-index: 2;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    display: none;
+    width: min(300px, 80vw);
+    padding: 8px 10px;
+    border-radius: 4px;
+    background: #1d2327;
+    color: #fff;
+    font-weight: 400;
+    line-height: 1.4;
+    transform: translateX(-50%);
+}
+
+.asig-field-help:hover .asig-field-help__tip,
+.asig-field-help:focus .asig-field-help__tip {
+    display: block;
 }
 
 .asig-governance-modal__actions {

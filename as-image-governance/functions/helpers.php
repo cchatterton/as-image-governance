@@ -45,6 +45,7 @@ function asig_get_attachment_governance(int $attachment_id): array
         'authority_level' => (string) get_post_meta($attachment_id, '_ig_authority_level', true),
         'authority_notes' => (string) get_post_meta($attachment_id, '_ig_authority_notes', true),
         'attribution'     => (string) get_post_meta($attachment_id, '_ig_attribution', true),
+        'expiry_date'     => (string) get_post_meta($attachment_id, '_ig_expiry_date', true),
     );
 }
 
@@ -177,6 +178,32 @@ function asig_get_attachment_term_names(int $attachment_id, string $taxonomy): a
     }
 
     return array_values(array_map('strval', $terms));
+}
+
+function asig_normalize_tag_terms($value): array
+{
+    $terms = is_array($value) ? $value : explode(',', (string) $value);
+    $terms = array_map(
+        static function ($term): string {
+            return ucfirst(trim(sanitize_text_field((string) $term)));
+        },
+        $terms
+    );
+
+    return array_values(array_unique(array_filter($terms)));
+}
+
+function asig_sanitize_expiry_date($value): string
+{
+    $date = sanitize_text_field((string) $value);
+
+    if ('' === $date) {
+        return '';
+    }
+
+    $parsed = date_create_from_format('Y-m-d', $date);
+
+    return $parsed && $parsed->format('Y-m-d') === $date ? $date : '';
 }
 
 function asig_get_current_request_path(): string

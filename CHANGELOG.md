@@ -2,6 +2,13 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.16 - 2026-06-15
+
+- Replaced the prior image-topic taxonomy with a new Image Tags taxonomy slug.
+- Normalized newly entered image color and image tag terms with uppercase first letters.
+- Added image expiry dates and a daily cron cleanup that removes expired images from featured-image, inline-image, and gallery-shortcode use.
+- Updated the governance modal with single-line Authority Notes and Attribution fields plus field-level help tooltips.
+
 ## 0.1.15 - 2026-06-15
 
 - Restored editor upload governance prompts by watching block-editor REST media uploads.
@@ -12,9 +19,9 @@ All notable changes to Image Governance are recorded here.
 ## 0.1.14 - 2026-06-15
 
 - Replaced the Usage Count display with a Usage line-item display while keeping the recount action.
-- Added Image Colors and Image Subject Matter attachment tag taxonomies.
-- Added color and subject matter fields to image details and the upload governance modal.
-- Added color and subject matter filters to the Media Library and media selection modal.
+- Added Image Colors and Image Tags attachment tag taxonomies.
+- Added color and image tags fields to image details and the upload governance modal.
+- Added color and image tags filters to the Media Library and media selection modal.
 
 ## 0.1.13 - 2026-06-15
 

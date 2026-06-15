@@ -202,7 +202,7 @@ function asig_add_media_columns(array $columns): array
     );
     $columns['asig_collections'] = __('Collections', 'as-image-governance');
     $columns['asig_image_colors'] = __('Image Colors', 'as-image-governance');
-    $columns['asig_subject_matter'] = __('Subject Matter', 'as-image-governance');
+    $columns['asig_image_tag'] = __('Image Tags', 'as-image-governance');
 
     return $columns;
 }
@@ -253,8 +253,8 @@ function asig_render_media_column(string $column_name, int $post_id): void
         echo get_the_term_list($post_id, 'ig_collection', '', ', ') ?: '&mdash;';
     } elseif ('asig_image_colors' === $column_name) {
         echo get_the_term_list($post_id, 'ig_image_color', '', ', ') ?: '&mdash;';
-    } elseif ('asig_subject_matter' === $column_name) {
-        echo get_the_term_list($post_id, 'ig_subject_matter', '', ', ') ?: '&mdash;';
+    } elseif ('asig_image_tag' === $column_name) {
+        echo get_the_term_list($post_id, 'ig_image_tag', '', ', ') ?: '&mdash;';
     }
 }
 
@@ -303,7 +303,7 @@ function asig_render_media_filters(string $post_type): void
     $missing = isset($_GET['asig_missing']) ? sanitize_text_field(wp_unslash($_GET['asig_missing'])) : '';
     $collection = isset($_GET['asig_collection']) ? absint($_GET['asig_collection']) : 0;
     $image_color = isset($_GET['asig_image_color']) ? absint($_GET['asig_image_color']) : 0;
-    $subject_matter = isset($_GET['asig_subject_matter']) ? absint($_GET['asig_subject_matter']) : 0;
+    $image_tags = isset($_GET['asig_image_tag']) ? absint($_GET['asig_image_tag']) : 0;
     ?>
     <select name="asig_authority_level">
         <option value=""><?php esc_html_e('All authority levels', 'as-image-governance'); ?></option>
@@ -341,11 +341,11 @@ function asig_render_media_filters(string $post_type): void
     );
     wp_dropdown_categories(
         array(
-            'taxonomy'          => 'ig_subject_matter',
-            'name'              => 'asig_subject_matter',
-            'show_option_all'   => __('All subject matter', 'as-image-governance'),
+            'taxonomy'          => 'ig_image_tag',
+            'name'              => 'asig_image_tag',
+            'show_option_all'   => __('All image tags', 'as-image-governance'),
             'hide_empty'        => false,
-            'selected'          => $subject_matter,
+            'selected'          => $image_tags,
             'value_field'       => 'term_id',
             'hierarchical'      => false,
         )
@@ -394,12 +394,12 @@ function asig_apply_governance_attachment_filters(array $query, array $request):
     $raw_missing_filter = isset($request['asig_missing']) && is_scalar($request['asig_missing']) ? wp_unslash($request['asig_missing']) : '';
     $raw_collection = isset($request['asig_collection']) && is_scalar($request['asig_collection']) ? wp_unslash($request['asig_collection']) : 0;
     $raw_image_color = isset($request['asig_image_color']) && is_scalar($request['asig_image_color']) ? wp_unslash($request['asig_image_color']) : 0;
-    $raw_subject_matter = isset($request['asig_subject_matter']) && is_scalar($request['asig_subject_matter']) ? wp_unslash($request['asig_subject_matter']) : 0;
+    $raw_image_tags = isset($request['asig_image_tag']) && is_scalar($request['asig_image_tag']) ? wp_unslash($request['asig_image_tag']) : 0;
     $authority_level = asig_sanitize_authority_level($raw_authority_level);
     $missing_filter = sanitize_text_field($raw_missing_filter);
     $collection = absint($raw_collection);
     $image_color = absint($raw_image_color);
-    $subject_matter = absint($raw_subject_matter);
+    $image_tags = absint($raw_image_tags);
 
     if ('' !== (string) $raw_authority_level) {
         $meta_query[] = asig_get_authority_meta_query($authority_level);
@@ -437,11 +437,11 @@ function asig_apply_governance_attachment_filters(array $query, array $request):
         );
     }
 
-    if ($subject_matter) {
+    if ($image_tags) {
         $tax_query[] = array(
-            'taxonomy' => 'ig_subject_matter',
+            'taxonomy' => 'ig_image_tag',
             'field'    => 'term_id',
-            'terms'    => $subject_matter,
+            'terms'    => $image_tags,
         );
     }
 
