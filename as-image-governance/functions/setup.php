@@ -274,6 +274,10 @@ function asig_handle_new_attachment_upload(int $attachment_id): void
         return;
     }
 
+    if ('' === trim((string) get_post_meta($attachment_id, '_ig_authority_level', true))) {
+        update_post_meta($attachment_id, '_ig_authority_level', '0');
+    }
+
     $source_url = asig_get_upload_source_url_from_request();
 
     if ($source_url && '' === trim((string) get_post_meta($attachment_id, '_ig_source', true))) {

@@ -148,7 +148,12 @@ function asig_render_media_library_governance_panel(): void
         <div class="asig-media-governance-panel__collections" aria-label="<?php esc_attr_e('Collection drop targets', 'as-image-governance'); ?>">
             <?php if ($collections) : ?>
                 <?php foreach ($collections as $collection) : ?>
-                    <button type="button" class="button asig-collection-drop-target" data-collection-id="<?php echo esc_attr((string) $collection['id']); ?>">
+                    <button
+                        type="button"
+                        class="button asig-collection-drop-target"
+                        data-collection-id="<?php echo esc_attr((string) $collection['id']); ?>"
+                        data-filter-url="<?php echo esc_url(add_query_arg(array('mode' => 'list', 'asig_collection' => (int) $collection['id']), admin_url('upload.php'))); ?>"
+                    >
                         <?php echo esc_html($collection['name']); ?>
                     </button>
                 <?php endforeach; ?>
@@ -167,7 +172,7 @@ function asig_add_media_columns(array $columns): array
     $columns['asig_authority'] = __('Authority', 'as-image-governance');
     $columns['asig_attribution'] = __('Attribution', 'as-image-governance');
     $columns['asig_usage_count'] = sprintf(
-        '%s <a class="asig-recount-link" href="%s" title="%s" aria-label="%s"><span class="dashicons dashicons-update"></span></a>',
+        '%s <button type="button" class="asig-recount-link" data-recount-url="%s" title="%s" aria-label="%s"><span class="dashicons dashicons-update"></span></button>',
         esc_html__('Usage Count', 'as-image-governance'),
         esc_url(asig_get_recount_url()),
         esc_attr__('Recount usage', 'as-image-governance'),
@@ -298,10 +303,22 @@ function asig_filter_media_library(WP_Query $query): void
     $meta_query = (array) $query->get('meta_query');
 
     if (isset($_GET['asig_authority_level']) && '' !== $_GET['asig_authority_level']) {
-        $meta_query[] = array(
-            'key'   => '_ig_authority_level',
-            'value' => asig_sanitize_authority_level(wp_unslash($_GET['asig_authority_level'])),
-        );
+        $authority_level = asig_sanitize_authority_level(wp_unslash($_GET['asig_authority_level']));
+
+        if ('0' === $authority_level) {
+            $meta_query[] = array(
+                'relation' => 'OR',
+                array('key' => '_ig_authority_level', 'compare' => 'NOT EXISTS'),
+                array('key' => '_ig_authority_level', 'value' => '', 'compare' => '='),
+                array('key' => '_ig_authority_level', 'value' => '0', 'compare' => '='),
+                array('key' => '_ig_authority_level', 'value' => 'null', 'compare' => '='),
+            );
+        } else {
+            $meta_query[] = array(
+                'key'   => '_ig_authority_level',
+                'value' => $authority_level,
+            );
+        }
     }
 
     $missing_filter = isset($_GET['asig_missing']) ? sanitize_text_field(wp_unslash($_GET['asig_missing'])) : '';
@@ -411,7 +428,7 @@ function asig_handle_usage_scan(): void
 
     $result = asig_scan_usage();
 
-    $redirect_to = isset($_GET['redirect_to']) ? esc_url_raw(wp_unslash($_GET['redirect_to'])) : admin_url('upload.php');
+    $redirect_to = isset($_REQUEST['redirect_to']) ? esc_url_raw(wp_unslash($_REQUEST['redirect_to'])) : admin_url('upload.php');
 
     wp_safe_redirect(add_query_arg(array('asig_notice' => 'scan_complete', 'asig_usage_count' => $result['usage_count']), $redirect_to));
     exit;

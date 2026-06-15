@@ -41,6 +41,12 @@
     opacity: 0.7;
 }
 
+.asig-recount-form {
+    display: inline-flex;
+    margin: 0;
+    vertical-align: middle;
+}
+
 .asig-recount-link {
     display: inline-flex;
     width: 20px;
@@ -48,6 +54,11 @@
     align-items: center;
     justify-content: center;
     vertical-align: middle;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #2271b1;
+    cursor: pointer;
     text-decoration: none;
 }
 

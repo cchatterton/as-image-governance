@@ -1,7 +1,7 @@
 # Image Governance
 
 Author: AlphaSys  
-Version: 0.1.6  
+Version: 0.1.7  
 Status: MVP  
 
 ## Purpose

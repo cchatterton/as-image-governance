@@ -26,6 +26,10 @@ function asig_get_authority_label($value): string
     $levels = asig_get_authority_levels();
     $key = (string) $value;
 
+    if ('' === trim($key) || 'null' === strtolower(trim($key))) {
+        return '';
+    }
+
     return $levels[$key] ?? $levels['0'];
 }
 
@@ -83,6 +87,14 @@ function asig_get_recount_url(): string
         'asig_scan_usage',
         'asig_scan_usage_nonce'
     );
+}
+
+function asig_get_admin_redirect_url(): string
+{
+    $host = isset($_SERVER['HTTP_HOST']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'])) : '';
+    $uri = isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '';
+
+    return $host && $uri ? set_url_scheme('http://' . $host . $uri) : admin_url('upload.php');
 }
 
 function asig_get_post_type_label($post_type): string

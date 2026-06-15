@@ -108,6 +108,10 @@
                 hoverClass: 'asig-drop-active',
                 tolerance: 'pointer',
                 drop: function (event, ui) {
+                    $(this).data('asig-just-dropped', true);
+                    window.setTimeout(function (target) {
+                        $(target).removeData('asig-just-dropped');
+                    }, 500, this);
                     assignImageToCollection(
                         getAttachmentIdFromElement(ui.draggable),
                         $(this).data('collection-id')
@@ -144,6 +148,10 @@
 
         $(document).on('drop.asigDrop', '.asig-collection-drop-target', function (event) {
             event.preventDefault();
+            $(this).data('asig-just-dropped', true);
+            window.setTimeout(function (target) {
+                $(target).removeData('asig-just-dropped');
+            }, 500, this);
             assignImageToCollection(
                 event.originalEvent.dataTransfer.getData('text/plain'),
                 $(this).data('collection-id')
@@ -151,12 +159,21 @@
         });
 
         $(document).on('click', '.asig-collection-drop-target', function () {
-            var collectionId = $(this).data('collection-id');
-            var selectedIds = getSelectedAttachmentIds();
+            if ($(this).data('asig-just-dropped')) {
+                return;
+            }
 
-            selectedIds.forEach(function (attachmentId) {
-                assignImageToCollection(attachmentId, collectionId);
-            });
+            var filterUrl = $(this).data('filter-url');
+
+            if (filterUrl) {
+                window.location.href = filterUrl;
+            }
+        });
+
+        $(document).on('click', '.asig-recount-link', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            window.location.href = $(this).data('recount-url');
         });
     }
 

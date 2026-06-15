@@ -2,6 +2,13 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.7 - 2026-06-15
+
+- Fixed Recount Usage control so it submits the plugin scan action instead of inheriting Media Library bulk action state.
+- Changed Media Library collection term clicks to filter the library by that collection.
+- Updated Unknown / None authority filtering to include missing, empty, and legacy null values.
+- Set new image attachments to authority level `0` when no authority value exists.
+
 ## 0.1.6 - 2026-06-15
 
 - Simplified the Media Library collection bar to show only collection terms.
