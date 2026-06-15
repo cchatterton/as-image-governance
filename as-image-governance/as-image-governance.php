@@ -1,11 +1,13 @@
 <?php
 /**
  * Plugin Name: Image Governance
+ * Plugin URI: https://github.com/cchatterton/as-image-governance
  * Description: Records image source, authority, usage, attribution, and lightweight collections.
  * Version: 0.1.0
  * Requires at least: 6.0
  * Requires PHP: 8.1
  * Author: AlphaSys
+ * Author URI: https://alphasys.com.au
  * Text Domain: as-image-governance
  */
 
@@ -23,3 +25,4 @@ require_once ASIG_PLUGIN_DIR . 'functions/setup.php';
 require_once ASIG_PLUGIN_DIR . 'functions/assets.php';
 require_once ASIG_PLUGIN_DIR . 'functions/admin.php';
 require_once ASIG_PLUGIN_DIR . 'functions/rest.php';
+require_once ASIG_PLUGIN_DIR . 'functions/github-updater.php';

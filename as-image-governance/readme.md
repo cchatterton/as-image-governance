@@ -31,6 +31,7 @@ as-image-governance/
 │   ├── admin.php
 │   ├── assets.php
 │   ├── rest.php
+│   ├── github-updater.php
 │   └── helpers.php
 ├── scripts/
 │   └── as-image-governance.js
@@ -47,6 +48,7 @@ as-image-governance/
 - Uninstall cleanup only runs when the explicit cleanup setting is enabled.
 - The usage scanner is manual and stores results in the `asig_usage_index` option.
 - The attribution page must be selected under Settings > Image Governance.
+- Plugin updates are delivered from GitHub releases at `cchatterton/as-image-governance`.
 
 ## Future Considerations
 

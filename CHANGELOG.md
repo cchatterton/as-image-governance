@@ -10,3 +10,4 @@ All notable changes to Image Governance are recorded here.
 - Added image collections taxonomy and drag-and-drop assignment support.
 - Added manual image usage scanner.
 - Added attribution page output and optional footer attribution link.
+- Added GitHub release updater for native WordPress plugin updates.
