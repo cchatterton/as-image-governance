@@ -26,12 +26,39 @@
     font-weight: 600;
 }
 
+.asig-assignment-status {
+    min-width: 160px;
+    color: #008a20;
+    font-weight: 600;
+}
+
 .asig-draggable-image {
     cursor: grab;
 }
 
 .asig-draggable-image:active {
     cursor: grabbing;
+}
+
+.asig-dragging {
+    opacity: 0.7;
+}
+
+.asig-recount-link {
+    display: inline-flex;
+    width: 20px;
+    height: 20px;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    text-decoration: none;
+}
+
+.asig-recount-link .dashicons {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    line-height: 16px;
 }
 
 .asig-usage-list {
@@ -53,6 +80,12 @@
     background: #f0f6fc;
     border-color: #2271b1;
     box-shadow: 0 0 0 1px #2271b1;
+}
+
+.asig-collection-assigned-target {
+    background: #edfaef !important;
+    border-color: #00a32a !important;
+    box-shadow: 0 0 0 1px #00a32a !important;
 }
 
 .asig-collection-assigned {

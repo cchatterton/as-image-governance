@@ -28,7 +28,7 @@ function asig_enqueue_admin_assets(string $hook): void
     wp_enqueue_script(
         'asig-admin',
         ASIG_PLUGIN_URL . 'scripts/as-image-governance.js',
-        array('jquery'),
+        array('jquery', 'jquery-ui-draggable', 'jquery-ui-droppable'),
         ASIG_VERSION,
         true
     );
@@ -41,6 +41,7 @@ function asig_enqueue_admin_assets(string $hook): void
             'attachmentUrl'       => esc_url_raw(rest_url('asig/v1/attachments')),
             'authorityLevels'     => asig_get_authority_levels(),
             'collections'         => asig_get_collection_options(),
+            'enableCollectionUi'  => 'upload.php' === $hook,
             'nonce'               => wp_create_nonce('wp_rest'),
             'strings'             => array(
                 'modalTitle'       => __('Image governance required', 'as-image-governance'),
@@ -53,6 +54,7 @@ function asig_enqueue_admin_assets(string $hook): void
                 'save'             => __('Save Governance Details', 'as-image-governance'),
                 'dismiss'          => __('Dismiss', 'as-image-governance'),
                 'saved'            => __('Governance details saved.', 'as-image-governance'),
+                'assignedTo'       => __('Assigned to %s.', 'as-image-governance'),
                 'createCollection' => __('Create collections under Manage Collections.', 'as-image-governance'),
             ),
         )

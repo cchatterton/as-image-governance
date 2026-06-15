@@ -40,6 +40,7 @@ function asig_register_collection_taxonomy(): void
             'show_in_menu'      => true,
             'hierarchical'      => false,
             'show_in_rest'      => true,
+            'update_count_callback' => '_update_generic_term_count',
             'capabilities'      => array(
                 'manage_terms' => 'upload_files',
                 'edit_terms'   => 'upload_files',

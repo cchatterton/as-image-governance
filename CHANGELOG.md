@@ -2,6 +2,14 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.5 - 2026-06-15
+
+- Moved Recount Usage into a refresh icon in the Usage Count column header.
+- Removed Manage Collections and collection picker controls from the Media Library top bar.
+- Made collection buttons assign selected images when clicked and accept image drops.
+- Improved grid-mode collection drag handling.
+- Fixed Image Collections count links to show assigned image counts and open a filtered Media Library view.
+
 ## 0.1.4 - 2026-06-15
 
 - Tightened GitHub updater cache handling so equal-version release responses are short-lived.

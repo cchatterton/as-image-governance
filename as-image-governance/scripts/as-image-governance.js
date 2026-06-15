@@ -29,11 +29,33 @@
             collection_id: collectionId
         }).then(function () {
             var $target = $('[data-id="' + attachmentId + '"], #post-' + attachmentId);
+            var $collection = $('.asig-collection-drop-target[data-collection-id="' + collectionId + '"]');
+            var collectionName = $.trim($collection.text());
             $target.addClass('asig-collection-assigned');
+            $collection.addClass('asig-collection-assigned-target');
+            updateCollectionCell(attachmentId, collectionName);
+            $('.asig-assignment-status').text(window.ASIG.strings.assignedTo.replace('%s', collectionName));
             window.setTimeout(function () {
                 $target.removeClass('asig-collection-assigned');
+                $collection.removeClass('asig-collection-assigned-target');
             }, 1200);
         });
+    }
+
+    function updateCollectionCell(attachmentId, collectionName) {
+        var $cell = $('#post-' + attachmentId + ' .column-asig_collections');
+        var currentText = $.trim($cell.text());
+
+        if (!$cell.length || !collectionName || currentText.indexOf(collectionName) !== -1) {
+            return;
+        }
+
+        if (!currentText || currentText === '—') {
+            $cell.text(collectionName);
+            return;
+        }
+
+        $cell.text(currentText + ', ' + collectionName);
     }
 
     function getAttachmentIdFromElement(element) {
@@ -54,12 +76,50 @@
     }
 
     function setupCollectionDraggables() {
-        $('.wp-list-table.media tbody tr, .attachments-browser .attachment, .media-frame .attachment')
+        if (!window.ASIG.enableCollectionUi) {
+            return;
+        }
+
+        var $items = $('.wp-list-table.media tbody tr, .attachments-browser .attachment, .media-frame .attachment')
             .attr('draggable', 'true')
             .addClass('asig-draggable-image');
+
+        if ($.fn.draggable) {
+            $items.not('.asig-ui-draggable').addClass('asig-ui-draggable').draggable({
+                appendTo: 'body',
+                helper: 'clone',
+                opacity: 0.8,
+                revert: 'invalid',
+                zIndex: 100000,
+                start: function () {
+                    $(this).addClass('asig-dragging');
+                },
+                stop: function () {
+                    $(this).removeClass('asig-dragging');
+                }
+            });
+        }
+
+        if ($.fn.droppable) {
+            $('.asig-collection-drop-target').not('.asig-ui-droppable').addClass('asig-ui-droppable').droppable({
+                accept: '.asig-draggable-image',
+                hoverClass: 'asig-drop-active',
+                tolerance: 'pointer',
+                drop: function (event, ui) {
+                    assignImageToCollection(
+                        getAttachmentIdFromElement(ui.draggable),
+                        $(this).data('collection-id')
+                    );
+                }
+            });
+        }
     }
 
     function bindCollectionAssignment() {
+        if (!window.ASIG.enableCollectionUi) {
+            return;
+        }
+
         $(document).on('dragstart.asig', '.wp-list-table.media tbody tr, .attachments-browser .attachment, .media-frame .attachment', function (event) {
             var attachmentId = getAttachmentIdFromElement(this);
 
@@ -88,10 +148,11 @@
             );
         });
 
-        $(document).on('click', '.asig-assign-selected', function () {
-            var collectionId = $('#asig-selected-collection').val();
+        $(document).on('click', '.asig-collection-drop-target', function () {
+            var collectionId = $(this).data('collection-id');
+            var selectedIds = getSelectedAttachmentIds();
 
-            getSelectedAttachmentIds().forEach(function (attachmentId) {
+            selectedIds.forEach(function (attachmentId) {
                 assignImageToCollection(attachmentId, collectionId);
             });
         });
@@ -146,6 +207,11 @@
 
         window.wp.Uploader.queue.on('add', function (attachment) {
             waitForUploadedAttachmentId(attachment);
+            if (attachment.on) {
+                attachment.on('change:id change:uploading change:type change:mime', function () {
+                    waitForUploadedAttachmentId(attachment);
+                });
+            }
         });
     }
 
@@ -154,11 +220,12 @@
         var timer = window.setInterval(function () {
             var attachmentId = attachment.get ? parseInt(attachment.get('id'), 10) : 0;
             var type = attachment.get ? attachment.get('type') : '';
+            var mime = attachment.get ? attachment.get('mime') : '';
             var uploading = attachment.get ? attachment.get('uploading') : false;
 
             attempts++;
 
-            if (attachmentId && 'image' === type && !uploading) {
+            if (attachmentId && ('image' === type || String(mime).indexOf('image/') === 0) && !uploading) {
                 window.clearInterval(timer);
                 maybeOpenGovernanceModalForUpload(attachmentId);
             }

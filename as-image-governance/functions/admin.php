@@ -20,6 +20,8 @@ add_filter('bulk_actions-upload', 'asig_register_bulk_actions');
 add_filter('handle_bulk_actions-upload', 'asig_handle_bulk_actions', 10, 3);
 add_action('admin_notices', 'asig_render_admin_notices');
 add_action('admin_notices', 'asig_render_media_library_governance_panel');
+add_filter('manage_edit-ig_collection_columns', 'asig_filter_collection_columns');
+add_filter('manage_ig_collection_custom_column', 'asig_render_collection_column', 10, 3);
 
 function asig_register_admin_pages(): void
 {
@@ -145,25 +147,16 @@ function asig_render_media_library_governance_panel(): void
     <div class="notice asig-media-governance-panel">
         <div class="asig-media-governance-panel__main">
             <strong><?php esc_html_e('Image Governance', 'as-image-governance'); ?></strong>
-            <a class="button button-primary" href="<?php echo esc_url(asig_get_recount_url()); ?>"><?php esc_html_e('Recount Usage', 'as-image-governance'); ?></a>
-            <a class="button" href="<?php echo esc_url(admin_url('edit-tags.php?taxonomy=ig_collection&post_type=attachment')); ?>"><?php esc_html_e('Manage Collections', 'as-image-governance'); ?></a>
         </div>
         <div class="asig-media-governance-panel__collections" aria-label="<?php esc_attr_e('Collection drop targets', 'as-image-governance'); ?>">
             <?php if ($collections) : ?>
-                <span class="asig-drop-help"><?php esc_html_e('Drag rows or tiles onto a collection:', 'as-image-governance'); ?></span>
+                <span class="asig-drop-help"><?php esc_html_e('Drag rows or tiles onto a collection, or select images and click a collection:', 'as-image-governance'); ?></span>
                 <?php foreach ($collections as $collection) : ?>
                     <button type="button" class="button asig-collection-drop-target" data-collection-id="<?php echo esc_attr((string) $collection['id']); ?>">
                         <?php echo esc_html($collection['name']); ?>
                     </button>
                 <?php endforeach; ?>
-                <label class="screen-reader-text" for="asig-selected-collection"><?php esc_html_e('Collection for selected images', 'as-image-governance'); ?></label>
-                <select id="asig-selected-collection">
-                    <option value=""><?php esc_html_e('Choose collection', 'as-image-governance'); ?></option>
-                    <?php foreach ($collections as $collection) : ?>
-                        <option value="<?php echo esc_attr((string) $collection['id']); ?>"><?php echo esc_html($collection['name']); ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <button type="button" class="button asig-assign-selected"><?php esc_html_e('Assign Selected', 'as-image-governance'); ?></button>
+                <span class="asig-assignment-status" aria-live="polite"></span>
             <?php else : ?>
                 <span><?php esc_html_e('Create collections, then drag image tiles or rows onto them.', 'as-image-governance'); ?></span>
             <?php endif; ?>
@@ -177,10 +170,43 @@ function asig_add_media_columns(array $columns): array
     $columns['asig_source'] = __('Source', 'as-image-governance');
     $columns['asig_authority'] = __('Authority', 'as-image-governance');
     $columns['asig_attribution'] = __('Attribution', 'as-image-governance');
-    $columns['asig_usage_count'] = __('Usage Count', 'as-image-governance');
+    $columns['asig_usage_count'] = sprintf(
+        '%s <a class="asig-recount-link" href="%s" title="%s" aria-label="%s"><span class="dashicons dashicons-update"></span></a>',
+        esc_html__('Usage Count', 'as-image-governance'),
+        esc_url(asig_get_recount_url()),
+        esc_attr__('Recount usage', 'as-image-governance'),
+        esc_attr__('Recount usage', 'as-image-governance')
+    );
     $columns['asig_collections'] = __('Collections', 'as-image-governance');
 
     return $columns;
+}
+
+function asig_filter_collection_columns(array $columns): array
+{
+    unset($columns['posts']);
+    $columns['asig_image_count'] = __('Count', 'as-image-governance');
+
+    return $columns;
+}
+
+function asig_render_collection_column(string $content, string $column_name, int $term_id): string
+{
+    if ('asig_image_count' !== $column_name) {
+        return $content;
+    }
+
+    $attachment_ids = get_objects_in_term($term_id, 'ig_collection');
+    $count = is_wp_error($attachment_ids) ? 0 : count(array_unique(array_map('intval', $attachment_ids)));
+    $url = add_query_arg(
+        array(
+            'mode'            => 'list',
+            'asig_collection' => $term_id,
+        ),
+        admin_url('upload.php')
+    );
+
+    return sprintf('<a href="%s">%d</a>', esc_url($url), (int) $count);
 }
 
 function asig_render_media_column(string $column_name, int $post_id): void
