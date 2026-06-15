@@ -4,6 +4,8 @@
     var activeAttachmentId = 0;
     var uploadWatcherBound = false;
     var promptedUploads = {};
+    var pendingUploadPollActive = false;
+    var lastExternalImageUrl = '';
 
     function restRequest(url, method, data) {
         return window.fetch(url, {
@@ -198,6 +200,24 @@
         });
     }
 
+    function pollPendingUploads() {
+        if (pendingUploadPollActive || activeAttachmentId || !window.ASIG || !window.ASIG.pendingUploadsUrl) {
+            return;
+        }
+
+        pendingUploadPollActive = true;
+
+        restRequest(window.ASIG.pendingUploadsUrl, 'GET').then(function (response) {
+            pendingUploadPollActive = false;
+
+            if (response && response.attachment_id) {
+                maybeOpenGovernanceModalForUpload(parseInt(response.attachment_id, 10));
+            }
+        }).catch(function () {
+            pendingUploadPollActive = false;
+        });
+    }
+
     function watchNewUploads() {
         if (uploadWatcherBound || !window.wp || !window.wp.Uploader || !window.wp.Uploader.queue) {
             return;
@@ -263,6 +283,10 @@
     function openGovernanceModal(details) {
         activeAttachmentId = details.attachment_id;
         $('.asig-governance-modal').remove();
+
+        if ((!details.source || !String(details.source).trim()) && lastExternalImageUrl) {
+            details.source = lastExternalImageUrl;
+        }
 
         var modal = [
             '<div class="asig-governance-modal" role="dialog" aria-modal="true">',
@@ -333,15 +357,28 @@
         });
     }
 
+    function bindExternalUrlCapture() {
+        $(document).on('input change', 'input[type="url"], input[placeholder*="URL"], input[aria-label*="URL"]', function () {
+            var value = $.trim($(this).val());
+
+            if (/^https?:\/\/.+\.(jpe?g|png|gif|webp|avif|svg)(\?.*)?$/i.test(value)) {
+                lastExternalImageUrl = value;
+            }
+        });
+    }
+
     $(function () {
         setupCollectionDraggables();
         bindCollectionAssignment();
         bindGovernanceModal();
+        bindExternalUrlCapture();
         watchNewUploads();
+        pollPendingUploads();
 
         window.setInterval(function () {
             setupCollectionDraggables();
             watchNewUploads();
+            pollPendingUploads();
         }, 1500);
     });
 })(jQuery);

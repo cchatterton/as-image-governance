@@ -145,12 +145,8 @@ function asig_render_media_library_governance_panel(): void
     $collections = asig_get_collection_options();
     ?>
     <div class="notice asig-media-governance-panel">
-        <div class="asig-media-governance-panel__main">
-            <strong><?php esc_html_e('Image Governance', 'as-image-governance'); ?></strong>
-        </div>
         <div class="asig-media-governance-panel__collections" aria-label="<?php esc_attr_e('Collection drop targets', 'as-image-governance'); ?>">
             <?php if ($collections) : ?>
-                <span class="asig-drop-help"><?php esc_html_e('Drag rows or tiles onto a collection, or select images and click a collection:', 'as-image-governance'); ?></span>
                 <?php foreach ($collections as $collection) : ?>
                     <button type="button" class="button asig-collection-drop-target" data-collection-id="<?php echo esc_attr((string) $collection['id']); ?>">
                         <?php echo esc_html($collection['name']); ?>
@@ -158,7 +154,7 @@ function asig_render_media_library_governance_panel(): void
                 <?php endforeach; ?>
                 <span class="asig-assignment-status" aria-live="polite"></span>
             <?php else : ?>
-                <span><?php esc_html_e('Create collections, then drag image tiles or rows onto them.', 'as-image-governance'); ?></span>
+                <span class="asig-assignment-status"></span>
             <?php endif; ?>
         </div>
     </div>

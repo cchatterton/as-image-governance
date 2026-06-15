@@ -39,6 +39,7 @@ function asig_enqueue_admin_assets(string $hook): void
         array(
             'assignCollectionUrl' => esc_url_raw(rest_url('asig/v1/collections/assign')),
             'attachmentUrl'       => esc_url_raw(rest_url('asig/v1/attachments')),
+            'pendingUploadsUrl'   => esc_url_raw(rest_url('asig/v1/uploads/pending')),
             'authorityLevels'     => asig_get_authority_levels(),
             'collections'         => asig_get_collection_options(),
             'enableCollectionUi'  => 'upload.php' === $hook,

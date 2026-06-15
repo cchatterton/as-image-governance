@@ -61,6 +61,16 @@ function asig_register_rest_routes(): void
             ),
         )
     );
+
+    register_rest_route(
+        'asig/v1',
+        '/uploads/pending',
+        array(
+            'methods'             => WP_REST_Server::READABLE,
+            'callback'            => 'asig_rest_get_pending_upload',
+            'permission_callback' => 'asig_rest_upload_permission',
+        )
+    );
 }
 
 function asig_rest_upload_permission(): bool
@@ -125,6 +135,39 @@ function asig_rest_save_attachment_governance(WP_REST_Request $request): WP_REST
     }
 
     return rest_ensure_response(asig_prepare_attachment_governance_response($attachment_id));
+}
+
+function asig_rest_get_pending_upload(): WP_REST_Response
+{
+    $user_id = get_current_user_id();
+    $pending = $user_id ? get_user_meta($user_id, 'asig_pending_uploads', true) : array();
+    $pending = is_array($pending) ? array_values(array_unique(array_filter(array_map('absint', $pending)))) : array();
+
+    while ($pending) {
+        $attachment_id = array_shift($pending);
+
+        if (asig_is_image_attachment($attachment_id)) {
+            if ($user_id) {
+                update_user_meta($user_id, 'asig_pending_uploads', $pending);
+            }
+
+            return rest_ensure_response(
+                array(
+                    'attachment_id' => $attachment_id,
+                )
+            );
+        }
+    }
+
+    if ($user_id) {
+        delete_user_meta($user_id, 'asig_pending_uploads');
+    }
+
+    return rest_ensure_response(
+        array(
+            'attachment_id' => 0,
+        )
+    );
 }
 
 function asig_prepare_attachment_governance_response(int $attachment_id): array

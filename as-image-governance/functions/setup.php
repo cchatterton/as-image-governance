@@ -16,6 +16,8 @@ add_filter('the_content', 'asig_append_attribution_page_content', 20);
 add_action('wp_footer', 'asig_render_footer_attribution_link');
 add_action('save_post', 'asig_update_usage_for_saved_post', 20, 2);
 add_action('delete_post', 'asig_remove_deleted_post_usage');
+add_filter('wp_handle_upload_prefilter', 'asig_prevent_duplicate_image_upload');
+add_action('add_attachment', 'asig_handle_new_attachment_upload');
 
 function asig_register_collection_taxonomy(): void
 {
@@ -197,6 +199,121 @@ function asig_save_attachment_fields(array $post, array $attachment): array
     }
 
     return $post;
+}
+
+function asig_prevent_duplicate_image_upload(array $file): array
+{
+    $name = isset($file['name']) ? sanitize_file_name((string) $file['name']) : '';
+    $type = isset($file['type']) ? (string) $file['type'] : '';
+
+    if ('' === $name || 0 !== strpos($type, 'image/')) {
+        return $file;
+    }
+
+    $existing_id = asig_find_attachment_by_filename($name);
+
+    if (!$existing_id) {
+        return $file;
+    }
+
+    $file['error'] = sprintf(
+        /* translators: 1: filename, 2: existing attachment URL, 3: existing attachment edit URL. */
+        __('An image named "%1$s" already exists. Existing file: %2$s Edit existing image: %3$s', 'as-image-governance'),
+        $name,
+        wp_get_attachment_url($existing_id),
+        get_edit_post_link($existing_id, '')
+    );
+
+    return $file;
+}
+
+function asig_find_attachment_by_filename(string $filename): int
+{
+    $attachments = get_posts(
+        array(
+            'post_type'      => 'attachment',
+            'post_status'    => 'inherit',
+            'posts_per_page' => 1,
+            'fields'         => 'ids',
+            'meta_query'     => array(
+                array(
+                    'key'     => '_wp_attached_file',
+                    'value'   => '/' . $filename,
+                    'compare' => 'LIKE',
+                ),
+            ),
+        )
+    );
+
+    if ($attachments) {
+        return (int) $attachments[0];
+    }
+
+    $attachments = get_posts(
+        array(
+            'post_type'      => 'attachment',
+            'post_status'    => 'inherit',
+            'posts_per_page' => 1,
+            'fields'         => 'ids',
+            'meta_query'     => array(
+                array(
+                    'key'     => '_wp_attached_file',
+                    'value'   => $filename,
+                    'compare' => '=',
+                ),
+            ),
+        )
+    );
+
+    return $attachments ? (int) $attachments[0] : 0;
+}
+
+function asig_handle_new_attachment_upload(int $attachment_id): void
+{
+    if (!asig_is_image_attachment($attachment_id)) {
+        return;
+    }
+
+    $source_url = asig_get_upload_source_url_from_request();
+
+    if ($source_url && '' === trim((string) get_post_meta($attachment_id, '_ig_source', true))) {
+        update_post_meta($attachment_id, '_ig_source', $source_url);
+    }
+
+    $user_id = get_current_user_id();
+
+    if (!$user_id) {
+        return;
+    }
+
+    $pending = get_user_meta($user_id, 'asig_pending_uploads', true);
+    $pending = is_array($pending) ? array_map('absint', $pending) : array();
+    $pending[] = $attachment_id;
+
+    update_user_meta($user_id, 'asig_pending_uploads', array_values(array_unique(array_filter($pending))));
+}
+
+function asig_get_upload_source_url_from_request(): string
+{
+    $keys = array('source_url', 'sourceUrl', 'url', 'image_url');
+
+    foreach ($keys as $key) {
+        if (!isset($_REQUEST[$key])) {
+            continue;
+        }
+
+        if (!is_scalar($_REQUEST[$key])) {
+            continue;
+        }
+
+        $url = esc_url_raw(wp_unslash($_REQUEST[$key]));
+
+        if ($url) {
+            return $url;
+        }
+    }
+
+    return '';
 }
 
 function asig_update_usage_for_saved_post(int $post_id, WP_Post $post): void

@@ -2,6 +2,13 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.6 - 2026-06-15
+
+- Simplified the Media Library collection bar to show only collection terms.
+- Added server-backed pending upload detection so list-mode and editor uploads can trigger governance prompts.
+- Added duplicate image filename prevention before upload, with the existing file URL in the error.
+- Added best-effort source metadata capture for uploads that provide an original source URL.
+
 ## 0.1.5 - 2026-06-15
 
 - Moved Recount Usage into a refresh icon in the Usage Count column header.
