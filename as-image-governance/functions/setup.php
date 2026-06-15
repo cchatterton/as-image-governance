@@ -14,6 +14,8 @@ add_filter('attachment_fields_to_edit', 'asig_add_attachment_fields', 10, 2);
 add_filter('attachment_fields_to_save', 'asig_save_attachment_fields', 10, 2);
 add_filter('the_content', 'asig_append_attribution_page_content', 20);
 add_action('wp_footer', 'asig_render_footer_attribution_link');
+add_action('save_post', 'asig_update_usage_for_saved_post', 20, 2);
+add_action('delete_post', 'asig_remove_deleted_post_usage');
 
 function asig_register_collection_taxonomy(): void
 {
@@ -67,7 +69,7 @@ function asig_add_attachment_fields(array $fields, WP_Post $post): array
     }
 
     $fields['asig_source'] = array(
-        'label' => __('Image Governance: Source', 'as-image-governance'),
+        'label' => __('Source', 'as-image-governance'),
         'input' => 'html',
         'html'  => sprintf(
             '<input type="text" class="widefat" name="attachments[%1$d][_ig_source]" value="%2$s">',
@@ -77,7 +79,7 @@ function asig_add_attachment_fields(array $fields, WP_Post $post): array
     );
 
     $fields['asig_authority_level'] = array(
-        'label' => __('Image Governance: Authority Level', 'as-image-governance'),
+        'label' => __('Authority Level', 'as-image-governance'),
         'input' => 'html',
         'html'  => sprintf(
             '<select class="widefat" name="attachments[%1$d][_ig_authority_level]">%2$s</select>',
@@ -87,7 +89,7 @@ function asig_add_attachment_fields(array $fields, WP_Post $post): array
     );
 
     $fields['asig_authority_notes'] = array(
-        'label' => __('Image Governance: Authority Notes', 'as-image-governance'),
+        'label' => __('Authority Notes', 'as-image-governance'),
         'input' => 'html',
         'html'  => sprintf(
             '<textarea class="widefat" rows="4" name="attachments[%1$d][_ig_authority_notes]">%2$s</textarea>',
@@ -97,7 +99,7 @@ function asig_add_attachment_fields(array $fields, WP_Post $post): array
     );
 
     $fields['asig_attribution'] = array(
-        'label' => __('Image Governance: Attribution', 'as-image-governance'),
+        'label' => __('Attribution', 'as-image-governance'),
         'input' => 'html',
         'html'  => sprintf(
             '<textarea class="widefat" rows="4" name="attachments[%1$d][_ig_attribution]">%2$s</textarea>',
@@ -106,7 +108,61 @@ function asig_add_attachment_fields(array $fields, WP_Post $post): array
         ),
     );
 
+    $fields['asig_collections'] = array(
+        'label' => __('Collections', 'as-image-governance'),
+        'input' => 'html',
+        'html'  => asig_render_attachment_collection_checkboxes((int) $post->ID),
+    );
+
+    $fields['asig_usage'] = array(
+        'label' => __('Usage', 'as-image-governance'),
+        'input' => 'html',
+        'html'  => sprintf(
+            '<p><strong>%1$d</strong> %2$s</p><p><a class="button" href="%3$s">%4$s</a></p>',
+            asig_get_attachment_usage_count((int) $post->ID),
+            esc_html__('known uses. Recount Usage rebuilds this from site content.', 'as-image-governance'),
+            esc_url(asig_get_recount_url()),
+            esc_html__('Recount Usage', 'as-image-governance')
+        ),
+    );
+
     return $fields;
+}
+
+function asig_render_attachment_collection_checkboxes(int $attachment_id): string
+{
+    $collections = asig_get_collection_options();
+    $selected = asig_get_attachment_collection_ids($attachment_id);
+
+    if (!$collections) {
+        return sprintf(
+            '<p>%1$s <a href="%2$s">%3$s</a></p>',
+            esc_html__('No collections exist yet.', 'as-image-governance'),
+            esc_url(admin_url('edit-tags.php?taxonomy=ig_collection&post_type=attachment')),
+            esc_html__('Create one', 'as-image-governance')
+        );
+    }
+
+    $html = '<fieldset class="asig-attachment-collections">';
+
+    foreach ($collections as $collection) {
+        $html .= sprintf(
+            '<label><input type="checkbox" name="attachments[%1$d][ig_collection][]" value="%2$d"%3$s> %4$s</label>',
+            $attachment_id,
+            (int) $collection['id'],
+            checked(in_array((int) $collection['id'], $selected, true), true, false),
+            esc_html($collection['name'])
+        );
+    }
+
+    $html .= sprintf(
+        '<p><a href="%1$s">%2$s</a></p>',
+        esc_url(admin_url('edit-tags.php?taxonomy=ig_collection&post_type=attachment')),
+        esc_html__('Manage collections', 'as-image-governance')
+    );
+    $html .= '</fieldset>';
+
+    return $html;
 }
 
 function asig_save_attachment_fields(array $post, array $attachment): array
@@ -133,7 +189,62 @@ function asig_save_attachment_fields(array $post, array $attachment): array
         update_post_meta($attachment_id, '_ig_authority_notes', sanitize_textarea_field($attachment['_ig_authority_notes']));
     }
 
+    if (isset($attachment['ig_collection']) && is_array($attachment['ig_collection'])) {
+        wp_set_object_terms($attachment_id, array_map('absint', $attachment['ig_collection']), 'ig_collection', false);
+    } else {
+        wp_set_object_terms($attachment_id, array(), 'ig_collection', false);
+    }
+
     return $post;
+}
+
+function asig_update_usage_for_saved_post(int $post_id, WP_Post $post): void
+{
+    if (wp_is_post_revision($post_id) || 'attachment' === $post->post_type || !in_array($post->post_status, array('publish', 'future', 'draft', 'pending', 'private'), true)) {
+        return;
+    }
+
+    $post_types = get_post_types(array('public' => true), 'names');
+
+    if (!in_array($post->post_type, $post_types, true)) {
+        return;
+    }
+
+    $usage = asig_get_usage_index();
+    asig_remove_post_from_usage_index($usage, $post_id);
+    asig_add_featured_image_usage($usage, $post_id);
+    asig_add_content_image_usage($usage, $post_id);
+    update_option('asig_usage_index', $usage, false);
+}
+
+function asig_remove_deleted_post_usage(int $post_id): void
+{
+    $usage = asig_get_usage_index();
+    asig_remove_post_from_usage_index($usage, $post_id);
+    update_option('asig_usage_index', $usage, false);
+}
+
+function asig_remove_post_from_usage_index(array &$usage, int $post_id): void
+{
+    foreach ($usage as $attachment_id => $items) {
+        if (!is_array($items)) {
+            unset($usage[$attachment_id]);
+            continue;
+        }
+
+        $usage[$attachment_id] = array_values(
+            array_filter(
+                $items,
+                static function (array $item) use ($post_id): bool {
+                    return (int) ($item['post_id'] ?? 0) !== $post_id;
+                }
+            )
+        );
+
+        if (!$usage[$attachment_id]) {
+            unset($usage[$attachment_id]);
+        }
+    }
 }
 
 function asig_append_attribution_page_content(string $content): string

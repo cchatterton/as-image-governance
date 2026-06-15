@@ -32,6 +32,35 @@ function asig_register_rest_routes(): void
             ),
         )
     );
+
+    register_rest_route(
+        'asig/v1',
+        '/attachments/(?P<attachment_id>\d+)',
+        array(
+            array(
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => 'asig_rest_get_attachment_governance',
+                'permission_callback' => 'asig_rest_upload_permission',
+                'args'                => array(
+                    'attachment_id' => array(
+                        'required'          => true,
+                        'sanitize_callback' => 'absint',
+                    ),
+                ),
+            ),
+            array(
+                'methods'             => WP_REST_Server::EDITABLE,
+                'callback'            => 'asig_rest_save_attachment_governance',
+                'permission_callback' => 'asig_rest_upload_permission',
+                'args'                => array(
+                    'attachment_id' => array(
+                        'required'          => true,
+                        'sanitize_callback' => 'absint',
+                    ),
+                ),
+            ),
+        )
+    );
 }
 
 function asig_rest_upload_permission(): bool
@@ -63,4 +92,51 @@ function asig_rest_assign_collection(WP_REST_Request $request): WP_REST_Response
             'message'       => __('Image assigned to collection.', 'as-image-governance'),
         )
     );
+}
+
+function asig_rest_get_attachment_governance(WP_REST_Request $request): WP_REST_Response|WP_Error
+{
+    $attachment_id = (int) $request->get_param('attachment_id');
+
+    if (!asig_is_image_attachment($attachment_id)) {
+        return new WP_Error('asig_invalid_attachment', __('Attachment must be an image.', 'as-image-governance'), array('status' => 400));
+    }
+
+    return rest_ensure_response(asig_prepare_attachment_governance_response($attachment_id));
+}
+
+function asig_rest_save_attachment_governance(WP_REST_Request $request): WP_REST_Response|WP_Error
+{
+    $attachment_id = (int) $request->get_param('attachment_id');
+
+    if (!asig_is_image_attachment($attachment_id)) {
+        return new WP_Error('asig_invalid_attachment', __('Attachment must be an image.', 'as-image-governance'), array('status' => 400));
+    }
+
+    update_post_meta($attachment_id, '_ig_source', sanitize_text_field((string) $request->get_param('source')));
+    update_post_meta($attachment_id, '_ig_authority_level', asig_sanitize_authority_level($request->get_param('authority_level')));
+    update_post_meta($attachment_id, '_ig_authority_notes', sanitize_textarea_field((string) $request->get_param('authority_notes')));
+    update_post_meta($attachment_id, '_ig_attribution', sanitize_textarea_field((string) $request->get_param('attribution')));
+
+    $collections = $request->get_param('collections');
+
+    if (is_array($collections)) {
+        wp_set_object_terms($attachment_id, array_map('absint', $collections), 'ig_collection', false);
+    }
+
+    return rest_ensure_response(asig_prepare_attachment_governance_response($attachment_id));
+}
+
+function asig_prepare_attachment_governance_response(int $attachment_id): array
+{
+    $metadata = asig_get_attachment_governance($attachment_id);
+    $metadata['attachment_id'] = $attachment_id;
+    $metadata['collections'] = asig_get_attachment_collection_ids($attachment_id);
+    $metadata['usage_count'] = asig_get_attachment_usage_count($attachment_id);
+    $metadata['needs_governance'] = '' === trim($metadata['source'])
+        || '' === trim($metadata['attribution'])
+        || '' === trim($metadata['authority_level'])
+        || '0' === (string) $metadata['authority_level'];
+
+    return $metadata;
 }

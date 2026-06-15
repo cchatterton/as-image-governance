@@ -6,6 +6,22 @@
     margin: 0;
 }
 
+.asig-media-governance-panel {
+    display: grid;
+    grid-template-columns: minmax(240px, max-content) minmax(0, 1fr);
+    gap: 12px 20px;
+    align-items: center;
+    padding: 12px;
+}
+
+.asig-media-governance-panel__main,
+.asig-media-governance-panel__collections {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
 .asig-usage-list {
     margin: 6px 0 0;
 }
@@ -24,6 +40,87 @@
 .asig-collection-drop-target.asig-drop-active {
     border-color: #2271b1;
     box-shadow: 0 0 0 1px #2271b1;
+}
+
+.asig-collection-assigned {
+    outline: 3px solid #00a32a;
+    outline-offset: -3px;
+}
+
+.asig-attachment-collections {
+    display: grid;
+    gap: 6px;
+}
+
+.asig-governance-modal {
+    position: fixed;
+    z-index: 160000;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.asig-governance-modal__panel {
+    position: relative;
+    width: min(640px, 100%);
+    max-height: calc(100vh - 48px);
+    overflow: auto;
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.asig-governance-modal__close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    background: transparent;
+    color: #1d2327;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.asig-governance-modal h2 {
+    margin-top: 0;
+}
+
+.asig-governance-modal label,
+.asig-governance-modal fieldset {
+    display: grid;
+    gap: 6px;
+    margin: 0 0 14px;
+    font-weight: 600;
+}
+
+.asig-governance-modal input[type="text"],
+.asig-governance-modal select,
+.asig-governance-modal textarea {
+    width: 100%;
+    font-weight: 400;
+}
+
+.asig-governance-modal fieldset label {
+    display: block;
+    margin: 0 0 6px;
+    font-weight: 400;
+}
+
+.asig-governance-modal__actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.asig-governance-modal__status,
+.asig-modal-note {
+    margin: 8px 0 0;
 }
 
 .asig-attribution-list {
@@ -56,6 +153,10 @@
 }
 
 @media (max-width: 600px) {
+    .asig-media-governance-panel {
+        grid-template-columns: 1fr;
+    }
+
     .asig-attribution-item {
         grid-template-columns: 1fr;
     }

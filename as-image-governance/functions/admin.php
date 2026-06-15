@@ -19,6 +19,7 @@ add_action('pre_get_posts', 'asig_filter_media_library');
 add_filter('bulk_actions-upload', 'asig_register_bulk_actions');
 add_filter('handle_bulk_actions-upload', 'asig_handle_bulk_actions', 10, 3);
 add_action('admin_notices', 'asig_render_admin_notices');
+add_action('admin_notices', 'asig_render_media_library_governance_panel');
 
 function asig_register_admin_pages(): void
 {
@@ -152,6 +153,37 @@ function asig_render_tools_page(): void
             <?php wp_nonce_field('asig_scan_usage', 'asig_scan_usage_nonce'); ?>
             <?php submit_button(__('Scan Usage', 'as-image-governance')); ?>
         </form>
+    </div>
+    <?php
+}
+
+function asig_render_media_library_governance_panel(): void
+{
+    $screen = get_current_screen();
+
+    if (!$screen || 'upload' !== $screen->id || !current_user_can('upload_files')) {
+        return;
+    }
+
+    $collections = asig_get_collection_options();
+    ?>
+    <div class="notice asig-media-governance-panel">
+        <div class="asig-media-governance-panel__main">
+            <strong><?php esc_html_e('Image Governance', 'as-image-governance'); ?></strong>
+            <a class="button button-primary" href="<?php echo esc_url(asig_get_recount_url()); ?>"><?php esc_html_e('Recount Usage', 'as-image-governance'); ?></a>
+            <a class="button" href="<?php echo esc_url(admin_url('edit-tags.php?taxonomy=ig_collection&post_type=attachment')); ?>"><?php esc_html_e('Manage Collections', 'as-image-governance'); ?></a>
+        </div>
+        <div class="asig-media-governance-panel__collections" aria-label="<?php esc_attr_e('Collection drop targets', 'as-image-governance'); ?>">
+            <?php if ($collections) : ?>
+                <?php foreach ($collections as $collection) : ?>
+                    <button type="button" class="button asig-collection-drop-target" data-collection-id="<?php echo esc_attr((string) $collection['id']); ?>">
+                        <?php echo esc_html($collection['name']); ?>
+                    </button>
+                <?php endforeach; ?>
+            <?php else : ?>
+                <span><?php esc_html_e('Create collections, then drag image tiles or rows onto them.', 'as-image-governance'); ?></span>
+            <?php endif; ?>
+        </div>
     </div>
     <?php
 }

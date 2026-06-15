@@ -66,6 +66,15 @@ function asig_get_settings(): array
     return wp_parse_args(is_array($settings) ? $settings : array(), $defaults);
 }
 
+function asig_get_recount_url(): string
+{
+    return wp_nonce_url(
+        admin_url('admin-post.php?action=asig_scan_usage'),
+        'asig_scan_usage',
+        'asig_scan_usage_nonce'
+    );
+}
+
 function asig_update_settings(array $settings): void
 {
     update_option('asig_settings', $settings, false);
@@ -89,6 +98,36 @@ function asig_get_attachment_usage(int $attachment_id): array
 function asig_get_attachment_usage_count(int $attachment_id): int
 {
     return count(asig_get_attachment_usage($attachment_id));
+}
+
+function asig_get_collection_options(): array
+{
+    $terms = get_terms(array('taxonomy' => 'ig_collection', 'hide_empty' => false));
+
+    if (is_wp_error($terms)) {
+        return array();
+    }
+
+    return array_map(
+        static function (WP_Term $term): array {
+            return array(
+                'id'   => (int) $term->term_id,
+                'name' => $term->name,
+            );
+        },
+        $terms
+    );
+}
+
+function asig_get_attachment_collection_ids(int $attachment_id): array
+{
+    $terms = wp_get_object_terms($attachment_id, 'ig_collection', array('fields' => 'ids'));
+
+    if (is_wp_error($terms)) {
+        return array();
+    }
+
+    return array_map('intval', $terms);
 }
 
 function asig_get_current_request_path(): string

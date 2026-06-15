@@ -1,7 +1,7 @@
 # Image Governance
 
 Author: AlphaSys  
-Version: 0.1.0  
+Version: 0.1.1  
 Status: MVP  
 
 ## Purpose
@@ -18,6 +18,8 @@ Image Governance helps WordPress site owners record where images came from, what
 - Settings page for attribution display and scanner behavior.
 - Frontend attribution page output for a referring page.
 - Optional footer attribution link when the current page has attributed images.
+- Media-modal intervention when selected images are missing governance details.
+- Visible Recount Usage and collection drop targets in the Media Library.
 
 ## Folder Structure
 
@@ -47,6 +49,7 @@ as-image-governance/
 - Governance metadata is retained on deactivation.
 - Uninstall cleanup only runs when the explicit cleanup setting is enabled.
 - The usage scanner is manual and stores results in the `asig_usage_index` option.
+- Usage counts also update when public posts/pages/CPTs are saved after the plugin is active.
 - The attribution page must be selected under Settings > Image Governance.
 - Plugin updates are delivered from GitHub releases at `cchatterton/as-image-governance`.
 

@@ -37,8 +37,24 @@ function asig_enqueue_admin_assets(string $hook): void
         'asig-admin',
         'ASIG',
         array(
-            'restUrl' => esc_url_raw(rest_url('asig/v1/collections/assign')),
-            'nonce'   => wp_create_nonce('wp_rest'),
+            'assignCollectionUrl' => esc_url_raw(rest_url('asig/v1/collections/assign')),
+            'attachmentUrl'       => esc_url_raw(rest_url('asig/v1/attachments')),
+            'authorityLevels'     => asig_get_authority_levels(),
+            'collections'         => asig_get_collection_options(),
+            'nonce'               => wp_create_nonce('wp_rest'),
+            'strings'             => array(
+                'modalTitle'       => __('Image governance required', 'as-image-governance'),
+                'modalIntro'       => __('Add governance details before this image moves further through the workflow.', 'as-image-governance'),
+                'source'           => __('Source', 'as-image-governance'),
+                'authorityLevel'   => __('Authority Level', 'as-image-governance'),
+                'authorityNotes'   => __('Authority Notes', 'as-image-governance'),
+                'attribution'      => __('Attribution', 'as-image-governance'),
+                'collections'      => __('Collections', 'as-image-governance'),
+                'save'             => __('Save Governance Details', 'as-image-governance'),
+                'dismiss'          => __('Dismiss', 'as-image-governance'),
+                'saved'            => __('Governance details saved.', 'as-image-governance'),
+                'createCollection' => __('Create collections under Manage Collections.', 'as-image-governance'),
+            ),
         )
     );
 }
