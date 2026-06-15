@@ -2,6 +2,11 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.17 - 2026-06-15
+
+- Anchored governance modal help tooltips to the help icon so they do not spill out of the modal.
+- Removed the Collections dropdown from the list-mode Media Library filter bar because collection filtering is handled by the collection strip.
+
 ## 0.1.16 - 2026-06-15
 
 - Replaced the prior image-topic taxonomy with a new Image Tags taxonomy slug.

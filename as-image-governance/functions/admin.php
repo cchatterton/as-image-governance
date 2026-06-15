@@ -301,7 +301,6 @@ function asig_render_media_filters(string $post_type): void
 
     $selected_authority = isset($_GET['asig_authority_level']) ? sanitize_text_field(wp_unslash($_GET['asig_authority_level'])) : '';
     $missing = isset($_GET['asig_missing']) ? sanitize_text_field(wp_unslash($_GET['asig_missing'])) : '';
-    $collection = isset($_GET['asig_collection']) ? absint($_GET['asig_collection']) : 0;
     $image_color = isset($_GET['asig_image_color']) ? absint($_GET['asig_image_color']) : 0;
     $image_tags = isset($_GET['asig_image_tag']) ? absint($_GET['asig_image_tag']) : 0;
     ?>
@@ -317,17 +316,6 @@ function asig_render_media_filters(string $post_type): void
         <option value="attribution" <?php selected($missing, 'attribution'); ?>><?php esc_html_e('Missing Attribution', 'as-image-governance'); ?></option>
     </select>
     <?php
-    wp_dropdown_categories(
-        array(
-            'taxonomy'          => 'ig_collection',
-            'name'              => 'asig_collection',
-            'show_option_all'   => __('All collections', 'as-image-governance'),
-            'hide_empty'        => false,
-            'selected'          => $collection,
-            'value_field'       => 'term_id',
-            'hierarchical'      => false,
-        )
-    );
     wp_dropdown_categories(
         array(
             'taxonomy'          => 'ig_image_color',
