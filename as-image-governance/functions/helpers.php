@@ -135,7 +135,12 @@ function asig_get_attachment_usage_count(int $attachment_id): int
 
 function asig_get_collection_options(): array
 {
-    $terms = get_terms(array('taxonomy' => 'ig_collection', 'hide_empty' => false));
+    return asig_get_taxonomy_options('ig_collection');
+}
+
+function asig_get_taxonomy_options(string $taxonomy): array
+{
+    $terms = get_terms(array('taxonomy' => $taxonomy, 'hide_empty' => false));
 
     if (is_wp_error($terms)) {
         return array();
@@ -161,6 +166,17 @@ function asig_get_attachment_collection_ids(int $attachment_id): array
     }
 
     return array_map('intval', $terms);
+}
+
+function asig_get_attachment_term_names(int $attachment_id, string $taxonomy): array
+{
+    $terms = wp_get_object_terms($attachment_id, $taxonomy, array('fields' => 'names'));
+
+    if (is_wp_error($terms)) {
+        return array();
+    }
+
+    return array_values(array_map('strval', $terms));
 }
 
 function asig_get_current_request_path(): string

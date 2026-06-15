@@ -34,3 +34,15 @@ foreach ($attachments as $attachment_id) {
     delete_post_meta((int) $attachment_id, '_ig_authority_notes');
     delete_post_meta((int) $attachment_id, '_ig_attribution');
 }
+
+foreach (array('ig_collection', 'ig_image_color', 'ig_subject_matter') as $taxonomy) {
+    $terms = get_terms(array('taxonomy' => $taxonomy, 'hide_empty' => false));
+
+    if (is_wp_error($terms)) {
+        continue;
+    }
+
+    foreach ($terms as $term) {
+        wp_delete_term((int) $term->term_id, $taxonomy);
+    }
+}

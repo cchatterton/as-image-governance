@@ -9,6 +9,8 @@
     var AsigAuthorityFilter = null;
     var AsigMissingFilter = null;
     var AsigCollectionFilter = null;
+    var AsigImageColorFilter = null;
+    var AsigSubjectMatterFilter = null;
 
     function restRequest(url, method, data) {
         return window.fetch(url, {
@@ -309,6 +311,10 @@
         }).join('');
     }
 
+    function buildTagValue(tags) {
+        return (tags || []).join(', ');
+    }
+
     function openGovernanceModal(details) {
         activeAttachmentId = details.attachment_id;
         $('.asig-governance-modal').remove();
@@ -327,6 +333,8 @@
                         '<label>' + escapeHtml(window.ASIG.strings.authorityLevel) + '<select name="authority_level">' + buildAuthorityOptions(details.authority_level) + '</select></label>',
                         '<label>' + escapeHtml(window.ASIG.strings.authorityNotes) + '<textarea name="authority_notes" rows="4">' + escapeHtml(details.authority_notes || '') + '</textarea></label>',
                         '<label>' + escapeHtml(window.ASIG.strings.attribution) + '<textarea name="attribution" rows="4">' + escapeHtml(details.attribution || '') + '</textarea></label>',
+                        '<label>' + escapeHtml(window.ASIG.strings.imageColors) + '<input type="text" name="image_colors" value="' + escapeHtml(buildTagValue(details.image_colors)) + '"></label>',
+                        '<label>' + escapeHtml(window.ASIG.strings.subjectMatter) + '<input type="text" name="subject_matter" value="' + escapeHtml(buildTagValue(details.subject_matter)) + '"></label>',
                         '<fieldset><legend>' + escapeHtml(window.ASIG.strings.collections) + '</legend>' + buildCollectionOptions(details.collections) + '</fieldset>',
                         '<div class="asig-governance-modal__actions">',
                             '<button type="submit" class="button button-primary">' + escapeHtml(window.ASIG.strings.save) + '</button>',
@@ -362,6 +370,8 @@
                 authority_level: $form.find('[name="authority_level"]').val(),
                 authority_notes: $form.find('[name="authority_notes"]').val(),
                 attribution: $form.find('[name="attribution"]').val(),
+                image_colors: $form.find('[name="image_colors"]').val(),
+                subject_matter: $form.find('[name="subject_matter"]').val(),
                 collections: collections
             }).then(function () {
                 $form.find('.asig-governance-modal__status').text(window.ASIG.strings.saved);
@@ -405,6 +415,8 @@
         AsigAuthorityFilter = createAuthorityFilter();
         AsigMissingFilter = createMissingFilter();
         AsigCollectionFilter = createCollectionFilter();
+        AsigImageColorFilter = createTermFilter('asig-image-color-filter', window.ASIG.strings.allImageColors, 'asig_image_color', window.ASIG.imageColors || []);
+        AsigSubjectMatterFilter = createTermFilter('asig-subject-matter-filter', window.ASIG.strings.allSubjectMatter, 'asig_subject_matter', window.ASIG.subjectMatter || []);
 
         window.wp.media.view.AttachmentsBrowser.prototype.asigFiltersAdded = true;
 
@@ -439,6 +451,24 @@
                     controller: this.controller,
                     model: this.collection.props,
                     priority: -73
+                }).render()
+            );
+
+            this.toolbar.set(
+                'asigImageColorFilter',
+                new AsigImageColorFilter({
+                    controller: this.controller,
+                    model: this.collection.props,
+                    priority: -72
+                }).render()
+            );
+
+            this.toolbar.set(
+                'asigSubjectMatterFilter',
+                new AsigSubjectMatterFilter({
+                    controller: this.controller,
+                    model: this.collection.props,
+                    priority: -71
                 }).render()
             );
         };
@@ -505,25 +535,31 @@
     }
 
     function createCollectionFilter() {
+        return createTermFilter('asig-collection-filter', window.ASIG.strings.allCollections, 'asig_collection', window.ASIG.collections || []);
+    }
+
+    function createTermFilter(id, allLabel, propName, terms) {
         return window.wp.media.view.AttachmentFilters.extend({
-            id: 'asig-collection-filter',
+            id: id,
             createFilters: function () {
+                var allProps = {};
                 var filters = {
                     all: {
-                        text: window.ASIG.strings.allCollections,
-                        props: {
-                            asig_collection: ''
-                        },
+                        text: allLabel,
+                        props: allProps,
                         priority: 10
                     }
                 };
 
-                $.each(window.ASIG.collections || [], function (index, collection) {
-                    filters['asig_collection_' + collection.id] = {
-                        text: collection.name,
-                        props: {
-                            asig_collection: collection.id
-                        },
+                allProps[propName] = '';
+
+                $.each(terms || [], function (index, term) {
+                    var props = {};
+                    props[propName] = term.id;
+
+                    filters[propName + '_' + term.id] = {
+                        text: term.name,
+                        props: props,
                         priority: 20 + index
                     };
                 });

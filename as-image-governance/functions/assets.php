@@ -42,6 +42,8 @@ function asig_enqueue_admin_assets(string $hook): void
             'pendingUploadsUrl'   => esc_url_raw(rest_url('asig/v1/uploads/pending')),
             'authorityLevels'     => asig_get_authority_levels(),
             'collections'         => asig_get_collection_options(),
+            'imageColors'         => asig_get_taxonomy_options('ig_image_color'),
+            'subjectMatter'       => asig_get_taxonomy_options('ig_subject_matter'),
             'enableCollectionUi'  => 'upload.php' === $hook,
             'nonce'               => wp_create_nonce('wp_rest'),
             'strings'             => array(
@@ -52,6 +54,8 @@ function asig_enqueue_admin_assets(string $hook): void
                 'authorityNotes'   => __('Authority Notes', 'as-image-governance'),
                 'attribution'      => __('Attribution', 'as-image-governance'),
                 'collections'      => __('Collections', 'as-image-governance'),
+                'imageColors'      => __('Image Colors', 'as-image-governance'),
+                'subjectMatter'    => __('Subject Matter', 'as-image-governance'),
                 'save'             => __('Save Governance Details', 'as-image-governance'),
                 'dismiss'          => __('Dismiss', 'as-image-governance'),
                 'saved'            => __('Governance details saved.', 'as-image-governance'),
@@ -63,6 +67,8 @@ function asig_enqueue_admin_assets(string $hook): void
                 'missingSource'    => __('Missing Source', 'as-image-governance'),
                 'missingAttribution' => __('Missing Attribution', 'as-image-governance'),
                 'allCollections'   => __('All collections', 'as-image-governance'),
+                'allImageColors'   => __('All image colors', 'as-image-governance'),
+                'allSubjectMatter' => __('All subject matter', 'as-image-governance'),
             ),
         )
     );

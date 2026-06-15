@@ -193,14 +193,16 @@ function asig_add_media_columns(array $columns): array
     $columns['asig_source'] = __('Source', 'as-image-governance');
     $columns['asig_authority'] = __('Authority', 'as-image-governance');
     $columns['asig_attribution'] = __('Attribution', 'as-image-governance');
-    $columns['asig_usage_count'] = sprintf(
+    $columns['asig_usage'] = sprintf(
         '%s <button type="button" class="asig-recount-link" data-recount-url="%s" title="%s" aria-label="%s"><span class="dashicons dashicons-update"></span></button>',
-        esc_html__('Usage Count', 'as-image-governance'),
+        esc_html__('Usage', 'as-image-governance'),
         esc_url(asig_get_recount_url()),
         esc_attr__('Recount usage', 'as-image-governance'),
         esc_attr__('Recount usage', 'as-image-governance')
     );
     $columns['asig_collections'] = __('Collections', 'as-image-governance');
+    $columns['asig_image_colors'] = __('Image Colors', 'as-image-governance');
+    $columns['asig_subject_matter'] = __('Subject Matter', 'as-image-governance');
 
     return $columns;
 }
@@ -245,30 +247,38 @@ function asig_render_media_column(string $column_name, int $post_id): void
         echo esc_html(asig_get_authority_label(get_post_meta($post_id, '_ig_authority_level', true)));
     } elseif ('asig_attribution' === $column_name) {
         echo esc_html(wp_trim_words((string) get_post_meta($post_id, '_ig_attribution', true), 12));
-    } elseif ('asig_usage_count' === $column_name) {
-        echo esc_html((string) asig_get_attachment_usage_count($post_id));
-        asig_render_attachment_usage_details($post_id);
+    } elseif ('asig_usage' === $column_name) {
+        echo wp_kses_post(asig_get_attachment_usage_details_html($post_id));
     } elseif ('asig_collections' === $column_name) {
         echo get_the_term_list($post_id, 'ig_collection', '', ', ') ?: '&mdash;';
+    } elseif ('asig_image_colors' === $column_name) {
+        echo get_the_term_list($post_id, 'ig_image_color', '', ', ') ?: '&mdash;';
+    } elseif ('asig_subject_matter' === $column_name) {
+        echo get_the_term_list($post_id, 'ig_subject_matter', '', ', ') ?: '&mdash;';
     }
 }
 
 function asig_render_attachment_usage_details(int $post_id): void
 {
+    echo wp_kses_post(asig_get_attachment_usage_details_html($post_id));
+}
+
+function asig_get_attachment_usage_details_html(int $post_id): string
+{
     $usage = asig_get_attachment_usage($post_id);
 
     if (!$usage) {
-        return;
+        return '<p class="asig-no-usage">' . esc_html__('No known uses.', 'as-image-governance') . '</p>';
     }
 
-    echo '<ul class="asig-usage-list">';
+    $html = '<ul class="asig-usage-list">';
     foreach ($usage as $item) {
         $used_post_id = (int) ($item['post_id'] ?? 0);
         if (!$used_post_id) {
             continue;
         }
 
-        printf(
+        $html .= sprintf(
             '<li>%s, %s: <a href="%s">%s</a> <a href="%s">%s</a></li>',
             esc_html((string) ($item['usage_type'] ?? '')),
             esc_html(asig_get_post_type_label($item['post_type'] ?? get_post_type($used_post_id))),
@@ -278,7 +288,9 @@ function asig_render_attachment_usage_details(int $post_id): void
             esc_html__('View', 'as-image-governance')
         );
     }
-    echo '</ul>';
+    $html .= '</ul>';
+
+    return $html;
 }
 
 function asig_render_media_filters(string $post_type): void
@@ -290,6 +302,8 @@ function asig_render_media_filters(string $post_type): void
     $selected_authority = isset($_GET['asig_authority_level']) ? sanitize_text_field(wp_unslash($_GET['asig_authority_level'])) : '';
     $missing = isset($_GET['asig_missing']) ? sanitize_text_field(wp_unslash($_GET['asig_missing'])) : '';
     $collection = isset($_GET['asig_collection']) ? absint($_GET['asig_collection']) : 0;
+    $image_color = isset($_GET['asig_image_color']) ? absint($_GET['asig_image_color']) : 0;
+    $subject_matter = isset($_GET['asig_subject_matter']) ? absint($_GET['asig_subject_matter']) : 0;
     ?>
     <select name="asig_authority_level">
         <option value=""><?php esc_html_e('All authority levels', 'as-image-governance'); ?></option>
@@ -310,6 +324,28 @@ function asig_render_media_filters(string $post_type): void
             'show_option_all'   => __('All collections', 'as-image-governance'),
             'hide_empty'        => false,
             'selected'          => $collection,
+            'value_field'       => 'term_id',
+            'hierarchical'      => false,
+        )
+    );
+    wp_dropdown_categories(
+        array(
+            'taxonomy'          => 'ig_image_color',
+            'name'              => 'asig_image_color',
+            'show_option_all'   => __('All image colors', 'as-image-governance'),
+            'hide_empty'        => false,
+            'selected'          => $image_color,
+            'value_field'       => 'term_id',
+            'hierarchical'      => false,
+        )
+    );
+    wp_dropdown_categories(
+        array(
+            'taxonomy'          => 'ig_subject_matter',
+            'name'              => 'asig_subject_matter',
+            'show_option_all'   => __('All subject matter', 'as-image-governance'),
+            'hide_empty'        => false,
+            'selected'          => $subject_matter,
             'value_field'       => 'term_id',
             'hierarchical'      => false,
         )
@@ -357,9 +393,13 @@ function asig_apply_governance_attachment_filters(array $query, array $request):
     $raw_authority_level = isset($request['asig_authority_level']) && is_scalar($request['asig_authority_level']) ? wp_unslash($request['asig_authority_level']) : '';
     $raw_missing_filter = isset($request['asig_missing']) && is_scalar($request['asig_missing']) ? wp_unslash($request['asig_missing']) : '';
     $raw_collection = isset($request['asig_collection']) && is_scalar($request['asig_collection']) ? wp_unslash($request['asig_collection']) : 0;
+    $raw_image_color = isset($request['asig_image_color']) && is_scalar($request['asig_image_color']) ? wp_unslash($request['asig_image_color']) : 0;
+    $raw_subject_matter = isset($request['asig_subject_matter']) && is_scalar($request['asig_subject_matter']) ? wp_unslash($request['asig_subject_matter']) : 0;
     $authority_level = asig_sanitize_authority_level($raw_authority_level);
     $missing_filter = sanitize_text_field($raw_missing_filter);
     $collection = absint($raw_collection);
+    $image_color = absint($raw_image_color);
+    $subject_matter = absint($raw_subject_matter);
 
     if ('' !== (string) $raw_authority_level) {
         $meta_query[] = asig_get_authority_meta_query($authority_level);
@@ -386,6 +426,22 @@ function asig_apply_governance_attachment_filters(array $query, array $request):
             'taxonomy' => 'ig_collection',
             'field'    => 'term_id',
             'terms'    => $collection,
+        );
+    }
+
+    if ($image_color) {
+        $tax_query[] = array(
+            'taxonomy' => 'ig_image_color',
+            'field'    => 'term_id',
+            'terms'    => $image_color,
+        );
+    }
+
+    if ($subject_matter) {
+        $tax_query[] = array(
+            'taxonomy' => 'ig_subject_matter',
+            'field'    => 'term_id',
+            'terms'    => $subject_matter,
         );
     }
 

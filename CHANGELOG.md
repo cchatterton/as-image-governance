@@ -2,6 +2,13 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.14 - 2026-06-15
+
+- Replaced the Usage Count display with a Usage line-item display while keeping the recount action.
+- Added Image Colors and Image Subject Matter attachment tag taxonomies.
+- Added color and subject matter fields to image details and the upload governance modal.
+- Added color and subject matter filters to the Media Library and media selection modal.
+
 ## 0.1.13 - 2026-06-15
 
 - Forced WordPress media-modal secondary toolbar filters to use flex layout.

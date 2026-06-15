@@ -1,7 +1,7 @@
 # Image Governance
 
 Author: AlphaSys  
-Version: 0.1.13  
+Version: 0.1.14  
 Status: MVP  
 
 ## Purpose
@@ -13,6 +13,7 @@ Image Governance helps WordPress site owners record where images came from, what
 - Governance fields on image attachments: Source, Authority Level, Authority Notes, and Attribution.
 - Media Library columns and filters for governance review.
 - Flat image collections using the `ig_collection` attachment taxonomy.
+- Image color and subject matter attachment tag taxonomies.
 - Bulk authority and collection assignment in the Media Library.
 - Media Library usage recount for featured images, inline images, galleries, pages, posts, and public custom post types.
 - Settings page for attribution display and scanner behavior.

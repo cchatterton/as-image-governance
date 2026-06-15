@@ -51,6 +51,76 @@ function asig_register_collection_taxonomy(): void
             ),
         )
     );
+
+    register_taxonomy(
+        'ig_image_color',
+        'attachment',
+        array(
+            'labels'                => array(
+                'name'                       => __('Image Colors', 'as-image-governance'),
+                'singular_name'              => __('Image Color', 'as-image-governance'),
+                'search_items'               => __('Search Image Colors', 'as-image-governance'),
+                'popular_items'              => __('Popular Image Colors', 'as-image-governance'),
+                'all_items'                  => __('All Image Colors', 'as-image-governance'),
+                'edit_item'                  => __('Edit Image Color', 'as-image-governance'),
+                'update_item'                => __('Update Image Color', 'as-image-governance'),
+                'add_new_item'               => __('Add New Image Color', 'as-image-governance'),
+                'new_item_name'              => __('New Image Color Name', 'as-image-governance'),
+                'separate_items_with_commas' => __('Separate image colors with commas', 'as-image-governance'),
+                'add_or_remove_items'        => __('Add or remove image colors', 'as-image-governance'),
+                'choose_from_most_used'      => __('Choose from the most used image colors', 'as-image-governance'),
+                'menu_name'                  => __('Image Colors', 'as-image-governance'),
+            ),
+            'public'                => false,
+            'show_ui'               => true,
+            'show_admin_column'     => false,
+            'show_in_menu'          => true,
+            'hierarchical'          => false,
+            'show_in_rest'          => true,
+            'update_count_callback' => '_update_generic_term_count',
+            'capabilities'          => array(
+                'manage_terms' => 'upload_files',
+                'edit_terms'   => 'upload_files',
+                'delete_terms' => 'upload_files',
+                'assign_terms' => 'upload_files',
+            ),
+        )
+    );
+
+    register_taxonomy(
+        'ig_subject_matter',
+        'attachment',
+        array(
+            'labels'                => array(
+                'name'                       => __('Image Subject Matter', 'as-image-governance'),
+                'singular_name'              => __('Image Subject Matter', 'as-image-governance'),
+                'search_items'               => __('Search Image Subject Matter', 'as-image-governance'),
+                'popular_items'              => __('Popular Image Subject Matter', 'as-image-governance'),
+                'all_items'                  => __('All Image Subject Matter', 'as-image-governance'),
+                'edit_item'                  => __('Edit Image Subject Matter', 'as-image-governance'),
+                'update_item'                => __('Update Image Subject Matter', 'as-image-governance'),
+                'add_new_item'               => __('Add New Image Subject Matter', 'as-image-governance'),
+                'new_item_name'              => __('New Image Subject Matter Name', 'as-image-governance'),
+                'separate_items_with_commas' => __('Separate subject matter tags with commas', 'as-image-governance'),
+                'add_or_remove_items'        => __('Add or remove subject matter tags', 'as-image-governance'),
+                'choose_from_most_used'      => __('Choose from the most used subject matter tags', 'as-image-governance'),
+                'menu_name'                  => __('Image Subject Matter', 'as-image-governance'),
+            ),
+            'public'                => false,
+            'show_ui'               => true,
+            'show_admin_column'     => false,
+            'show_in_menu'          => true,
+            'hierarchical'          => false,
+            'show_in_rest'          => true,
+            'update_count_callback' => '_update_generic_term_count',
+            'capabilities'          => array(
+                'manage_terms' => 'upload_files',
+                'edit_terms'   => 'upload_files',
+                'delete_terms' => 'upload_files',
+                'assign_terms' => 'upload_files',
+            ),
+        )
+    );
 }
 
 function asig_add_attachment_fields(array $fields, WP_Post $post): array
@@ -117,13 +187,24 @@ function asig_add_attachment_fields(array $fields, WP_Post $post): array
         'html'  => asig_render_attachment_collection_checkboxes((int) $post->ID),
     );
 
+    $fields['asig_image_colors'] = array(
+        'label' => __('Image Colors', 'as-image-governance'),
+        'input' => 'html',
+        'html'  => asig_render_attachment_tag_field((int) $post->ID, 'ig_image_color', 'ig_image_color'),
+    );
+
+    $fields['asig_subject_matter'] = array(
+        'label' => __('Subject Matter', 'as-image-governance'),
+        'input' => 'html',
+        'html'  => asig_render_attachment_tag_field((int) $post->ID, 'ig_subject_matter', 'ig_subject_matter'),
+    );
+
     $fields['asig_usage'] = array(
         'label' => __('Usage', 'as-image-governance'),
         'input' => 'html',
         'html'  => sprintf(
-            '<p><strong>%1$d</strong> %2$s</p><p><a class="button" href="%3$s">%4$s</a></p>',
-            asig_get_attachment_usage_count((int) $post->ID),
-            esc_html__('known uses. Recount Usage rebuilds this from site content.', 'as-image-governance'),
+            '%1$s<p><a class="button" href="%2$s">%3$s</a></p>',
+            asig_get_attachment_usage_details_html((int) $post->ID),
             esc_url(asig_get_recount_url()),
             esc_html__('Recount Usage', 'as-image-governance')
         ),
@@ -168,6 +249,19 @@ function asig_render_attachment_collection_checkboxes(int $attachment_id): strin
     return $html;
 }
 
+function asig_render_attachment_tag_field(int $attachment_id, string $taxonomy, string $field_name): string
+{
+    $names = asig_get_attachment_term_names($attachment_id, $taxonomy);
+
+    return sprintf(
+        '<input type="text" class="widefat" name="attachments[%1$d][%2$s]" value="%3$s"><p class="description">%4$s</p>',
+        $attachment_id,
+        esc_attr($field_name),
+        esc_attr(implode(', ', $names)),
+        esc_html__('Separate tags with commas.', 'as-image-governance')
+    );
+}
+
 function asig_save_attachment_fields(array $post, array $attachment): array
 {
     $attachment_id = (int) ($post['ID'] ?? 0);
@@ -196,6 +290,13 @@ function asig_save_attachment_fields(array $post, array $attachment): array
         wp_set_object_terms($attachment_id, array_map('absint', $attachment['ig_collection']), 'ig_collection', false);
     } else {
         wp_set_object_terms($attachment_id, array(), 'ig_collection', false);
+    }
+
+    foreach (array('ig_image_color', 'ig_subject_matter') as $taxonomy) {
+        if (isset($attachment[$taxonomy]) && is_scalar($attachment[$taxonomy])) {
+            $terms = array_filter(array_map('trim', explode(',', sanitize_text_field(wp_unslash($attachment[$taxonomy])))));
+            wp_set_object_terms($attachment_id, $terms, $taxonomy, false);
+        }
     }
 
     return $post;
