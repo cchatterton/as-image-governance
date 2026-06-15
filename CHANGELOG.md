@@ -2,6 +2,12 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.4 - 2026-06-15
+
+- Tightened GitHub updater cache handling so equal-version release responses are short-lived.
+- Ignored old release-cache formats that could hide newly published updates.
+- Added latest GitHub version metadata to the plugin row for diagnostics.
+
 ## 0.1.3 - 2026-06-15
 
 - Limited the governance modal to newly uploaded images only.

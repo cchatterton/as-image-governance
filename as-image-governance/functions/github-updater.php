@@ -101,6 +101,17 @@ final class ASIG_GitHub_Updater
             esc_html__('GitHub', 'as-image-governance')
         );
 
+        $release = self::get_latest_release();
+        $version = self::get_release_version($release);
+
+        if ($version) {
+            $links[] = sprintf(
+                '%s %s',
+                esc_html__('Latest GitHub:', 'as-image-governance'),
+                esc_html($version)
+            );
+        }
+
         return $links;
     }
 
@@ -133,7 +144,7 @@ final class ASIG_GitHub_Updater
 
         $cached = get_site_transient(self::RELEASE_TRANSIENT);
 
-        if (is_array($cached)) {
+        if (is_array($cached) && self::is_usable_cached_release($cached)) {
             return $cached;
         }
 
@@ -160,7 +171,12 @@ final class ASIG_GitHub_Updater
             return array();
         }
 
-        set_site_transient(self::RELEASE_TRANSIENT, $release, HOUR_IN_SECONDS);
+        $version = self::get_release_version($release);
+        $cache_ttl = $version && version_compare($version, ASIG_VERSION, '>') ? 6 * HOUR_IN_SECONDS : 10 * MINUTE_IN_SECONDS;
+        $release['asig_cached_for_version'] = ASIG_VERSION;
+        $release['asig_cached_at'] = time();
+
+        set_site_transient(self::RELEASE_TRANSIENT, $release, $cache_ttl);
 
         return $release;
     }
@@ -177,6 +193,27 @@ final class ASIG_GitHub_Updater
         }
 
         return ltrim((string) ($release['tag_name'] ?? ''), 'vV');
+    }
+
+    private static function is_usable_cached_release(array $release): bool
+    {
+        if (empty($release['asig_cached_for_version']) || ASIG_VERSION !== (string) $release['asig_cached_for_version']) {
+            return false;
+        }
+
+        $version = self::get_release_version($release);
+
+        if (!$version) {
+            return false;
+        }
+
+        if (version_compare($version, ASIG_VERSION, '>')) {
+            return true;
+        }
+
+        $cached_at = isset($release['asig_cached_at']) ? (int) $release['asig_cached_at'] : 0;
+
+        return $cached_at > 0 && (time() - $cached_at) < 10 * MINUTE_IN_SECONDS;
     }
 
     private static function get_release_asset_url($release): string
