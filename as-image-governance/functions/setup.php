@@ -1,0 +1,241 @@
+<?php
+/**
+ * Setup hooks for Image Governance.
+ *
+ * @package ImageGovernance
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+add_action('init', 'asig_register_collection_taxonomy');
+add_filter('attachment_fields_to_edit', 'asig_add_attachment_fields', 10, 2);
+add_filter('attachment_fields_to_save', 'asig_save_attachment_fields', 10, 2);
+add_filter('the_content', 'asig_append_attribution_page_content', 20);
+add_action('wp_footer', 'asig_render_footer_attribution_link');
+
+function asig_register_collection_taxonomy(): void
+{
+    register_taxonomy(
+        'ig_collection',
+        'attachment',
+        array(
+            'labels'            => array(
+                'name'          => __('Image Collections', 'as-image-governance'),
+                'singular_name' => __('Image Collection', 'as-image-governance'),
+                'search_items'  => __('Search Image Collections', 'as-image-governance'),
+                'all_items'     => __('All Image Collections', 'as-image-governance'),
+                'edit_item'     => __('Edit Image Collection', 'as-image-governance'),
+                'update_item'   => __('Update Image Collection', 'as-image-governance'),
+                'add_new_item'  => __('Add New Image Collection', 'as-image-governance'),
+                'new_item_name' => __('New Image Collection Name', 'as-image-governance'),
+                'menu_name'     => __('Image Collections', 'as-image-governance'),
+            ),
+            'public'            => false,
+            'show_ui'           => true,
+            'show_admin_column' => false,
+            'show_in_menu'      => true,
+            'hierarchical'      => false,
+            'show_in_rest'      => true,
+            'capabilities'      => array(
+                'manage_terms' => 'upload_files',
+                'edit_terms'   => 'upload_files',
+                'delete_terms' => 'upload_files',
+                'assign_terms' => 'upload_files',
+            ),
+        )
+    );
+}
+
+function asig_add_attachment_fields(array $fields, WP_Post $post): array
+{
+    if (!asig_is_image_attachment((int) $post->ID) || !current_user_can('upload_files')) {
+        return $fields;
+    }
+
+    $metadata = asig_get_attachment_governance((int) $post->ID);
+
+    $authority_options = '';
+    foreach (asig_get_authority_levels() as $value => $label) {
+        $authority_options .= sprintf(
+            '<option value="%s"%s>%s</option>',
+            esc_attr($value),
+            selected($metadata['authority_level'], $value, false),
+            esc_html($label)
+        );
+    }
+
+    $fields['asig_source'] = array(
+        'label' => __('Image Governance: Source', 'as-image-governance'),
+        'input' => 'html',
+        'html'  => sprintf(
+            '<input type="text" class="widefat" name="attachments[%1$d][_ig_source]" value="%2$s">',
+            (int) $post->ID,
+            esc_attr($metadata['source'])
+        ),
+    );
+
+    $fields['asig_authority_level'] = array(
+        'label' => __('Image Governance: Authority Level', 'as-image-governance'),
+        'input' => 'html',
+        'html'  => sprintf(
+            '<select class="widefat" name="attachments[%1$d][_ig_authority_level]">%2$s</select>',
+            (int) $post->ID,
+            $authority_options
+        ),
+    );
+
+    $fields['asig_authority_notes'] = array(
+        'label' => __('Image Governance: Authority Notes', 'as-image-governance'),
+        'input' => 'html',
+        'html'  => sprintf(
+            '<textarea class="widefat" rows="4" name="attachments[%1$d][_ig_authority_notes]">%2$s</textarea>',
+            (int) $post->ID,
+            esc_textarea($metadata['authority_notes'])
+        ),
+    );
+
+    $fields['asig_attribution'] = array(
+        'label' => __('Image Governance: Attribution', 'as-image-governance'),
+        'input' => 'html',
+        'html'  => sprintf(
+            '<textarea class="widefat" rows="4" name="attachments[%1$d][_ig_attribution]">%2$s</textarea>',
+            (int) $post->ID,
+            esc_textarea($metadata['attribution'])
+        ),
+    );
+
+    return $fields;
+}
+
+function asig_save_attachment_fields(array $post, array $attachment): array
+{
+    $attachment_id = (int) ($post['ID'] ?? 0);
+
+    if (!$attachment_id || !asig_is_image_attachment($attachment_id) || !current_user_can('upload_files')) {
+        return $post;
+    }
+
+    $text_fields = array('_ig_source', '_ig_attribution');
+
+    foreach ($text_fields as $field) {
+        if (isset($attachment[$field])) {
+            update_post_meta($attachment_id, $field, sanitize_text_field($attachment[$field]));
+        }
+    }
+
+    if (isset($attachment['_ig_authority_level'])) {
+        update_post_meta($attachment_id, '_ig_authority_level', asig_sanitize_authority_level($attachment['_ig_authority_level']));
+    }
+
+    if (isset($attachment['_ig_authority_notes'])) {
+        update_post_meta($attachment_id, '_ig_authority_notes', sanitize_textarea_field($attachment['_ig_authority_notes']));
+    }
+
+    return $post;
+}
+
+function asig_append_attribution_page_content(string $content): string
+{
+    if (!is_singular('page') || !in_the_loop() || !is_main_query()) {
+        return $content;
+    }
+
+    $settings = asig_get_settings();
+    $page_id = (int) $settings['attribution_page_id'];
+
+    if (!$page_id || get_queried_object_id() !== $page_id) {
+        return $content;
+    }
+
+    return $content . asig_render_attribution_details();
+}
+
+function asig_render_attribution_details(): string
+{
+    $ref = isset($_GET['ref']) ? sanitize_text_field(wp_unslash($_GET['ref'])) : '';
+
+    if ('' === trim($ref)) {
+        return '<div class="asig-attribution-list"><p>' . esc_html__('Image attribution details are shown when this page is opened from a page with attributed images.', 'as-image-governance') . '</p></div>';
+    }
+
+    $post = asig_find_post_by_path($ref);
+
+    if (!$post) {
+        return '<div class="asig-attribution-list"><p>' . esc_html__('No image attribution records were found for this page.', 'as-image-governance') . '</p></div>';
+    }
+
+    $rows = array();
+    foreach (asig_get_usage_index() as $attachment_id => $items) {
+        $attribution = trim((string) get_post_meta((int) $attachment_id, '_ig_attribution', true));
+
+        if ('' === $attribution || !is_array($items)) {
+            continue;
+        }
+
+        foreach ($items as $item) {
+            if ((int) ($item['post_id'] ?? 0) !== (int) $post->ID) {
+                continue;
+            }
+
+            $rows[] = array(
+                'attachment_id' => (int) $attachment_id,
+                'usage_type'    => (string) ($item['usage_type'] ?? ''),
+                'source'        => (string) get_post_meta((int) $attachment_id, '_ig_source', true),
+                'attribution'   => $attribution,
+            );
+        }
+    }
+
+    if (!$rows) {
+        return '<div class="asig-attribution-list"><p>' . esc_html__('No image attribution records were found for this page.', 'as-image-governance') . '</p></div>';
+    }
+
+    ob_start();
+    ?>
+    <div class="asig-attribution-list">
+        <?php foreach ($rows as $row) : ?>
+            <article class="asig-attribution-item">
+                <div class="asig-attribution-thumb">
+                    <?php echo wp_get_attachment_image((int) $row['attachment_id'], 'thumbnail'); ?>
+                </div>
+                <div class="asig-attribution-content">
+                    <p><strong><?php esc_html_e('Used on:', 'as-image-governance'); ?></strong> <?php echo esc_html(get_the_title($post)); ?></p>
+                    <p><strong><?php esc_html_e('Usage:', 'as-image-governance'); ?></strong> <?php echo esc_html($row['usage_type']); ?></p>
+                    <p><strong><?php esc_html_e('Source:', 'as-image-governance'); ?></strong> <?php echo esc_html($row['source']); ?></p>
+                    <p><strong><?php esc_html_e('Attribution:', 'as-image-governance'); ?></strong> <?php echo esc_html($row['attribution']); ?></p>
+                </div>
+            </article>
+        <?php endforeach; ?>
+    </div>
+    <?php
+
+    return (string) ob_get_clean();
+}
+
+function asig_render_footer_attribution_link(): void
+{
+    $settings = asig_get_settings();
+
+    if ('1' !== (string) $settings['enable_footer_link'] || !asig_current_page_has_attributed_images()) {
+        return;
+    }
+
+    $page_id = (int) $settings['attribution_page_id'];
+    $url = $page_id ? get_permalink($page_id) : '';
+
+    if (!$url) {
+        return;
+    }
+
+    $label = trim((string) $settings['footer_link_label']);
+    $label = '' !== $label ? $label : __('Image Attribution', 'as-image-governance');
+    $url = add_query_arg('ref', rawurlencode(asig_get_current_request_path()), $url);
+
+    printf(
+        '<p class="asig-footer-attribution-link"><a href="%s">%s</a></p>',
+        esc_url($url),
+        esc_html($label)
+    );
+}

@@ -1,0 +1,62 @@
+.asig-admin-wrap .form-table td {
+    max-width: 760px;
+}
+
+.asig-authority-label-list {
+    margin: 0;
+}
+
+.asig-usage-list {
+    margin: 6px 0 0;
+}
+
+.asig-usage-list li {
+    margin: 0 0 4px;
+}
+
+.asig-collection-drop-panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.asig-collection-drop-target.asig-drop-active {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.asig-attribution-list {
+    margin-top: 2rem;
+}
+
+.asig-attribution-item {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 16px;
+    margin: 0 0 20px;
+    padding: 0 0 20px;
+    border-bottom: 1px solid currentColor;
+}
+
+.asig-attribution-thumb img {
+    display: block;
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+}
+
+.asig-attribution-content p {
+    margin: 0 0 6px;
+}
+
+.asig-footer-attribution-link {
+    margin: 1rem 0;
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    .asig-attribution-item {
+        grid-template-columns: 1fr;
+    }
+}
