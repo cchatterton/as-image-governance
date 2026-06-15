@@ -2,6 +2,12 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.2 - 2026-06-15
+
+- Improved GitHub update detection on the WordPress Plugins screen.
+- Reduced stale release cache risk after publishing a new GitHub release.
+- Cleared the plugin release cache after successful upgrader runs.
+
 ## 0.1.1 - 2026-06-15
 
 - Added a media-modal intervention for images missing governance details.

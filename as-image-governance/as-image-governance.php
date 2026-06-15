@@ -3,7 +3,7 @@
  * Plugin Name: Image Governance
  * Plugin URI: https://github.com/cchatterton/as-image-governance
  * Description: Records image source, authority, usage, attribution, and lightweight collections.
- * Version: 0.1.1
+ * Version: 0.1.2
  * Requires at least: 6.0
  * Requires PHP: 8.1
  * Author: AlphaSys
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('ASIG_VERSION', '0.1.1');
+define('ASIG_VERSION', '0.1.2');
 define('ASIG_PLUGIN_FILE', __FILE__);
 define('ASIG_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('ASIG_PLUGIN_URL', plugin_dir_url(__FILE__));

@@ -23,8 +23,10 @@ final class ASIG_GitHub_Updater
     public static function init(): void
     {
         add_filter('pre_set_site_transient_update_plugins', array(__CLASS__, 'add_update_data'));
+        add_filter('site_transient_update_plugins', array(__CLASS__, 'add_update_data'));
         add_filter('plugins_api', array(__CLASS__, 'add_plugin_information'), 10, 3);
         add_filter('plugin_row_meta', array(__CLASS__, 'add_plugin_row_meta'), 10, 2);
+        add_action('upgrader_process_complete', array(__CLASS__, 'clear_release_cache'));
     }
 
     public static function add_update_data($transient)
@@ -158,9 +160,14 @@ final class ASIG_GitHub_Updater
             return array();
         }
 
-        set_site_transient(self::RELEASE_TRANSIENT, $release, 6 * HOUR_IN_SECONDS);
+        set_site_transient(self::RELEASE_TRANSIENT, $release, HOUR_IN_SECONDS);
 
         return $release;
+    }
+
+    public static function clear_release_cache(): void
+    {
+        delete_site_transient(self::RELEASE_TRANSIENT);
     }
 
     private static function get_release_version($release): string
@@ -189,9 +196,17 @@ final class ASIG_GitHub_Updater
 
     private static function is_forced_update_check(): bool
     {
-        return is_admin()
-            && isset($_GET['force-check'])
-            && current_user_can('update_plugins');
+        if (!is_admin() || !current_user_can('update_plugins')) {
+            return false;
+        }
+
+        if (isset($_GET['force-check']) || isset($_POST['force-check'])) {
+            return true;
+        }
+
+        $action = isset($_REQUEST['action']) ? sanitize_key(wp_unslash($_REQUEST['action'])) : '';
+
+        return in_array($action, array('update-selected', 'upgrade-plugin', 'do-plugin-upgrade'), true);
     }
 }
 
