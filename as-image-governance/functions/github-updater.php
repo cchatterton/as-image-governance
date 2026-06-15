@@ -101,17 +101,6 @@ final class ASIG_GitHub_Updater
             esc_html__('GitHub', 'as-image-governance')
         );
 
-        $release = self::get_latest_release();
-        $version = self::get_release_version($release);
-
-        if ($version) {
-            $links[] = sprintf(
-                '%s %s',
-                esc_html__('Latest GitHub:', 'as-image-governance'),
-                esc_html($version)
-            );
-        }
-
         return $links;
     }
 

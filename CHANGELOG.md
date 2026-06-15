@@ -2,6 +2,11 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.10 - 2026-06-15
+
+- Removed the non-standard latest GitHub version diagnostic from plugin row metadata.
+- Stopped calling the GitHub release lookup from plugin row metadata rendering.
+
 ## 0.1.9 - 2026-06-15
 
 - Added an All Media collection control as the first Media Library term.
