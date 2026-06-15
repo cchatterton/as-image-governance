@@ -2,6 +2,11 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.8 - 2026-06-15
+
+- Removed the governance modal close icon and dismiss button.
+- Made saving governance details the only way to close the upload governance modal.
+
 ## 0.1.7 - 2026-06-15
 
 - Fixed Recount Usage control so it submits the plugin scan action instead of inheriting Media Library bulk action state.

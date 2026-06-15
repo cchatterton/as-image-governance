@@ -308,7 +308,6 @@
         var modal = [
             '<div class="asig-governance-modal" role="dialog" aria-modal="true">',
                 '<div class="asig-governance-modal__panel">',
-                    '<button type="button" class="asig-governance-modal__close" aria-label="' + escapeHtml(window.ASIG.strings.dismiss) + '">&times;</button>',
                     '<h2>' + escapeHtml(window.ASIG.strings.modalTitle) + '</h2>',
                     '<p>' + escapeHtml(window.ASIG.strings.modalIntro) + '</p>',
                     '<form>',
@@ -319,7 +318,6 @@
                         '<fieldset><legend>' + escapeHtml(window.ASIG.strings.collections) + '</legend>' + buildCollectionOptions(details.collections) + '</fieldset>',
                         '<div class="asig-governance-modal__actions">',
                             '<button type="submit" class="button button-primary">' + escapeHtml(window.ASIG.strings.save) + '</button>',
-                            '<button type="button" class="button asig-governance-modal__dismiss">' + escapeHtml(window.ASIG.strings.dismiss) + '</button>',
                         '</div>',
                         '<p class="asig-governance-modal__status" aria-live="polite"></p>',
                     '</form>',
@@ -337,8 +335,6 @@
     }
 
     function bindGovernanceModal() {
-        $(document).on('click', '.asig-governance-modal__close, .asig-governance-modal__dismiss', closeGovernanceModal);
-
         $(document).on('submit', '.asig-governance-modal form', function (event) {
             event.preventDefault();
 
