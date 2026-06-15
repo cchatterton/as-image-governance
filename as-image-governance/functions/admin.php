@@ -18,6 +18,7 @@ add_action('restrict_manage_posts', 'asig_render_media_filters');
 add_action('pre_get_posts', 'asig_filter_media_library');
 add_filter('bulk_actions-upload', 'asig_register_bulk_actions');
 add_filter('handle_bulk_actions-upload', 'asig_handle_bulk_actions', 10, 3);
+add_filter('ajax_query_attachments_args', 'asig_filter_media_modal_attachments');
 add_action('admin_notices', 'asig_render_admin_notices');
 add_action('admin_notices', 'asig_render_media_library_governance_panel');
 add_filter('manage_edit-ig_collection_columns', 'asig_filter_collection_columns');
@@ -321,35 +322,38 @@ function asig_filter_media_library(WP_Query $query): void
         return;
     }
 
-    $meta_query = (array) $query->get('meta_query');
+    $query_vars = asig_apply_governance_attachment_filters(
+        array(
+            'meta_query' => (array) $query->get('meta_query'),
+            'tax_query'  => (array) $query->get('tax_query'),
+        ),
+        $_GET
+    );
 
-    if (isset($_GET['asig_authority_level']) && '' !== $_GET['asig_authority_level']) {
-        $authority_level = asig_sanitize_authority_level(wp_unslash($_GET['asig_authority_level']));
-
-        if ('0' === $authority_level) {
-            $meta_query[] = array(
-                'relation' => 'OR',
-                array('key' => '_ig_authority_level', 'compare' => 'NOT EXISTS'),
-                array('key' => '_ig_authority_level', 'value' => '', 'compare' => '='),
-                array('key' => '_ig_authority_level', 'value' => '0', 'compare' => '='),
-                array('key' => '_ig_authority_level', 'value' => 'null', 'compare' => '='),
-            );
-        } else {
-            $meta_query[] = array(
-                'key'   => '_ig_authority_level',
-                'value' => $authority_level,
-            );
-        }
+    if (!empty($query_vars['meta_query'])) {
+        $query->set('meta_query', $query_vars['meta_query']);
     }
 
-    $missing_filter = isset($_GET['asig_missing']) ? sanitize_text_field(wp_unslash($_GET['asig_missing'])) : '';
+    if (!empty($query_vars['tax_query'])) {
+        $query->set('tax_query', $query_vars['tax_query']);
+    }
+}
 
-    if ('source' === $missing_filter) {
-        $meta_query[] = array(
-            'relation' => 'OR',
-            array('key' => '_ig_source', 'compare' => 'NOT EXISTS'),
-            array('key' => '_ig_source', 'value' => '', 'compare' => '='),
-        );
+function asig_filter_media_modal_attachments(array $query): array
+{
+    return asig_apply_governance_attachment_filters($query, $query);
+}
+
+function asig_apply_governance_attachment_filters(array $query, array $request): array
+{
+    $meta_query = isset($query['meta_query']) && is_array($query['meta_query']) ? $query['meta_query'] : array();
+    $tax_query = isset($query['tax_query']) && is_array($query['tax_query']) ? $query['tax_query'] : array();
+    $authority_level = isset($request['asig_authority_level']) ? asig_sanitize_authority_level(wp_unslash($request['asig_authority_level'])) : '';
+    $missing_filter = isset($request['asig_missing']) ? sanitize_text_field(wp_unslash($request['asig_missing'])) : '';
+    $collection = isset($request['asig_collection']) ? absint($request['asig_collection']) : 0;
+
+    if (isset($request['asig_authority_level']) && '' !== (string) $request['asig_authority_level']) {
+        $meta_query[] = asig_get_authority_meta_query($authority_level);
     }
 
     if ('attribution' === $missing_filter) {
@@ -360,22 +364,49 @@ function asig_filter_media_library(WP_Query $query): void
         );
     }
 
-    if ($meta_query) {
-        $query->set('meta_query', $meta_query);
-    }
-
-    if (isset($_GET['asig_collection']) && absint($_GET['asig_collection'])) {
-        $query->set(
-            'tax_query',
-            array(
-                array(
-                    'taxonomy' => 'ig_collection',
-                    'field'    => 'term_id',
-                    'terms'    => absint($_GET['asig_collection']),
-                ),
-            )
+    if ('source' === $missing_filter) {
+        $meta_query[] = array(
+            'relation' => 'OR',
+            array('key' => '_ig_source', 'compare' => 'NOT EXISTS'),
+            array('key' => '_ig_source', 'value' => '', 'compare' => '='),
         );
     }
+
+    if ($collection) {
+        $tax_query[] = array(
+            'taxonomy' => 'ig_collection',
+            'field'    => 'term_id',
+            'terms'    => $collection,
+        );
+    }
+
+    if ($meta_query) {
+        $query['meta_query'] = $meta_query;
+    }
+
+    if ($tax_query) {
+        $query['tax_query'] = $tax_query;
+    }
+
+    return $query;
+}
+
+function asig_get_authority_meta_query(string $authority_level): array
+{
+    if ('0' === $authority_level) {
+        return array(
+            'relation' => 'OR',
+            array('key' => '_ig_authority_level', 'compare' => 'NOT EXISTS'),
+            array('key' => '_ig_authority_level', 'value' => '', 'compare' => '='),
+            array('key' => '_ig_authority_level', 'value' => '0', 'compare' => '='),
+            array('key' => '_ig_authority_level', 'value' => 'null', 'compare' => '='),
+        );
+    }
+
+    return array(
+        'key'   => '_ig_authority_level',
+        'value' => $authority_level,
+    );
 }
 
 function asig_register_bulk_actions(array $actions): array

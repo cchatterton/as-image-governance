@@ -2,6 +2,12 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.11 - 2026-06-15
+
+- Added Image Governance filters to the WordPress media selection modal.
+- Added media modal filtering by authority level, missing governance data, and image collection.
+- Reused the same server-side filtering rules for Media Library and modal attachment queries.
+
 ## 0.1.10 - 2026-06-15
 
 - Removed the non-standard latest GitHub version diagnostic from plugin row metadata.

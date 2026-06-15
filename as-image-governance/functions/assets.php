@@ -58,6 +58,11 @@ function asig_enqueue_admin_assets(string $hook): void
                 'assignedTo'       => __('Assigned to %s.', 'as-image-governance'),
                 'removedFromTerms' => __('Removed from collections.', 'as-image-governance'),
                 'createCollection' => __('Create collections under Manage Collections.', 'as-image-governance'),
+                'allAuthority'     => __('All authority levels', 'as-image-governance'),
+                'allGovernance'    => __('All governance records', 'as-image-governance'),
+                'missingSource'    => __('Missing Source', 'as-image-governance'),
+                'missingAttribution' => __('Missing Attribution', 'as-image-governance'),
+                'allCollections'   => __('All collections', 'as-image-governance'),
             ),
         )
     );

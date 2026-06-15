@@ -6,6 +6,9 @@
     var promptedUploads = {};
     var pendingUploadPollActive = false;
     var lastExternalImageUrl = '';
+    var AsigAuthorityFilter = null;
+    var AsigMissingFilter = null;
+    var AsigCollectionFilter = null;
 
     function restRequest(url, method, data) {
         return window.fetch(url, {
@@ -389,7 +392,149 @@
         });
     }
 
+    function setupMediaModalFilters() {
+        if (!window.wp || !window.wp.media || !window.wp.media.view || !window.wp.media.view.AttachmentsBrowser || !window.wp.media.view.AttachmentFilters) {
+            return;
+        }
+
+        if (window.wp.media.view.AttachmentsBrowser.prototype.asigFiltersAdded) {
+            return;
+        }
+
+        var originalCreateToolbar = window.wp.media.view.AttachmentsBrowser.prototype.createToolbar;
+        AsigAuthorityFilter = createAuthorityFilter();
+        AsigMissingFilter = createMissingFilter();
+        AsigCollectionFilter = createCollectionFilter();
+
+        window.wp.media.view.AttachmentsBrowser.prototype.asigFiltersAdded = true;
+
+        window.wp.media.view.AttachmentsBrowser.prototype.createToolbar = function () {
+            originalCreateToolbar.apply(this, arguments);
+
+            if (!this.toolbar || !this.collection || !this.collection.props) {
+                return;
+            }
+
+            this.toolbar.set(
+                'asigAuthorityFilter',
+                new AsigAuthorityFilter({
+                    controller: this.controller,
+                    model: this.collection.props,
+                    priority: -75
+                }).render()
+            );
+
+            this.toolbar.set(
+                'asigMissingFilter',
+                new AsigMissingFilter({
+                    controller: this.controller,
+                    model: this.collection.props,
+                    priority: -74
+                }).render()
+            );
+
+            this.toolbar.set(
+                'asigCollectionFilter',
+                new AsigCollectionFilter({
+                    controller: this.controller,
+                    model: this.collection.props,
+                    priority: -73
+                }).render()
+            );
+        };
+    }
+
+    function createAuthorityFilter() {
+        return window.wp.media.view.AttachmentFilters.extend({
+            id: 'asig-authority-filter',
+            createFilters: function () {
+                var filters = {
+                    all: {
+                        text: window.ASIG.strings.allAuthority,
+                        props: {
+                            asig_authority_level: ''
+                        },
+                        priority: 10
+                    }
+                };
+
+                $.each(window.ASIG.authorityLevels || {}, function (value, label) {
+                    filters['asig_authority_' + value] = {
+                        text: label,
+                        props: {
+                            asig_authority_level: value
+                        },
+                        priority: 20 + parseInt(value, 10)
+                    };
+                });
+
+                this.filters = filters;
+            }
+        });
+    }
+
+    function createMissingFilter() {
+        return window.wp.media.view.AttachmentFilters.extend({
+            id: 'asig-missing-filter',
+            createFilters: function () {
+                this.filters = {
+                    all: {
+                        text: window.ASIG.strings.allGovernance,
+                        props: {
+                            asig_missing: ''
+                        },
+                        priority: 10
+                    },
+                    source: {
+                        text: window.ASIG.strings.missingSource,
+                        props: {
+                            asig_missing: 'source'
+                        },
+                        priority: 20
+                    },
+                    attribution: {
+                        text: window.ASIG.strings.missingAttribution,
+                        props: {
+                            asig_missing: 'attribution'
+                        },
+                        priority: 30
+                    }
+                };
+            }
+        });
+    }
+
+    function createCollectionFilter() {
+        return window.wp.media.view.AttachmentFilters.extend({
+            id: 'asig-collection-filter',
+            createFilters: function () {
+                var filters = {
+                    all: {
+                        text: window.ASIG.strings.allCollections,
+                        props: {
+                            asig_collection: ''
+                        },
+                        priority: 10
+                    }
+                };
+
+                $.each(window.ASIG.collections || [], function (index, collection) {
+                    filters['asig_collection_' + collection.id] = {
+                        text: collection.name,
+                        props: {
+                            asig_collection: collection.id
+                        },
+                        priority: 20 + index
+                    };
+                });
+
+                this.filters = filters;
+            }
+        });
+    }
+
     $(function () {
+        setupMediaModalFilters();
         setupCollectionDraggables();
         bindCollectionAssignment();
         bindGovernanceModal();
