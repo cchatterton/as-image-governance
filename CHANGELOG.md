@@ -2,6 +2,13 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.15 - 2026-06-15
+
+- Restored editor upload governance prompts by watching block-editor REST media uploads.
+- Enqueued governance assets explicitly for the block editor.
+- Stopped writing Image Governance `no_update` entries into the WordPress plugin update transient.
+- Made plugin and update screens bypass the plugin release cache so newly published GitHub releases are not hidden by stale equal-version cache data.
+
 ## 0.1.14 - 2026-06-15
 
 - Replaced the Usage Count display with a Usage line-item display while keeping the recount action.

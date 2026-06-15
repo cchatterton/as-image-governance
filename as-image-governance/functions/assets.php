@@ -10,6 +10,7 @@ if (!defined('ABSPATH')) {
 }
 
 add_action('admin_enqueue_scripts', 'asig_enqueue_admin_assets');
+add_action('enqueue_block_editor_assets', 'asig_enqueue_block_editor_assets');
 add_action('wp_enqueue_scripts', 'asig_enqueue_frontend_assets');
 
 function asig_enqueue_admin_assets(string $hook): void
@@ -18,6 +19,16 @@ function asig_enqueue_admin_assets(string $hook): void
         return;
     }
 
+    asig_enqueue_admin_asset_bundle($hook);
+}
+
+function asig_enqueue_block_editor_assets(): void
+{
+    asig_enqueue_admin_asset_bundle('block-editor');
+}
+
+function asig_enqueue_admin_asset_bundle(string $hook): void
+{
     wp_enqueue_style(
         'asig-admin',
         ASIG_PLUGIN_URL . 'styles/as-image-governance.css',
@@ -28,7 +39,7 @@ function asig_enqueue_admin_assets(string $hook): void
     wp_enqueue_script(
         'asig-admin',
         ASIG_PLUGIN_URL . 'scripts/as-image-governance.js',
-        array('jquery', 'jquery-ui-draggable', 'jquery-ui-droppable'),
+        array('jquery', 'jquery-ui-draggable', 'jquery-ui-droppable', 'wp-api-fetch'),
         ASIG_VERSION,
         true
     );

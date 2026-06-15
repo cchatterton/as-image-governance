@@ -48,21 +48,12 @@ final class ASIG_GitHub_Updater
 
         if ($update) {
             $transient->response[$plugin_file] = $update;
+            unset($transient->no_update[$plugin_file]);
             return $transient;
         }
 
         unset($transient->response[$plugin_file]);
-
-        $transient->no_update[$plugin_file] = (object) array(
-            'id'           => self::GITHUB_URL,
-            'slug'         => self::SLUG,
-            'plugin'       => $plugin_file,
-            'new_version'  => ASIG_VERSION,
-            'url'          => self::GITHUB_URL,
-            'package'      => '',
-            'requires'     => self::REQUIRES,
-            'requires_php' => self::REQUIRES_PHP,
-        );
+        unset($transient->no_update[$plugin_file]);
 
         return $transient;
     }
@@ -132,7 +123,7 @@ final class ASIG_GitHub_Updater
 
     private static function get_latest_release()
     {
-        if (self::is_forced_update_check()) {
+        if (self::is_update_check_context()) {
             delete_site_transient(self::RELEASE_TRANSIENT);
         }
 
@@ -166,7 +157,7 @@ final class ASIG_GitHub_Updater
         }
 
         $version = self::get_release_version($release);
-        $cache_ttl = $version && version_compare($version, ASIG_VERSION, '>') ? 6 * HOUR_IN_SECONDS : 10 * MINUTE_IN_SECONDS;
+        $cache_ttl = $version && version_compare($version, ASIG_VERSION, '>') ? 6 * HOUR_IN_SECONDS : MINUTE_IN_SECONDS;
         $release['asig_cached_for_version'] = ASIG_VERSION;
         $release['asig_cached_at'] = time();
 
@@ -215,7 +206,7 @@ final class ASIG_GitHub_Updater
 
         $cached_at = isset($release['asig_cached_at']) ? (int) $release['asig_cached_at'] : 0;
 
-        return $cached_at > 0 && (time() - $cached_at) < 10 * MINUTE_IN_SECONDS;
+        return $cached_at > 0 && (time() - $cached_at) < MINUTE_IN_SECONDS;
     }
 
     private static function get_release_asset_url($release): string
@@ -233,13 +224,25 @@ final class ASIG_GitHub_Updater
         return '';
     }
 
-    private static function is_forced_update_check(): bool
+    private static function is_update_check_context(): bool
     {
         if (!is_admin() || !current_user_can('update_plugins')) {
             return false;
         }
 
         if (isset($_GET['force-check']) || isset($_POST['force-check'])) {
+            return true;
+        }
+
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+
+        if ($screen && in_array((string) $screen->id, array('plugins', 'update-core', 'plugin-install'), true)) {
+            return true;
+        }
+
+        $pagenow = $GLOBALS['pagenow'] ?? '';
+
+        if (in_array($pagenow, array('plugins.php', 'update-core.php', 'update.php'), true)) {
             return true;
         }
 

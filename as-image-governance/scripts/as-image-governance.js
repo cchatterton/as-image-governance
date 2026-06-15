@@ -3,6 +3,7 @@
 
     var activeAttachmentId = 0;
     var uploadWatcherBound = false;
+    var apiFetchWatcherBound = false;
     var promptedUploads = {};
     var pendingUploadPollActive = false;
     var lastExternalImageUrl = '';
@@ -220,10 +221,14 @@
             return;
         }
 
-        promptedUploads[attachmentId] = true;
-
         restRequest(attachmentDetailsUrl(attachmentId), 'GET').then(function (details) {
-            if (!details || !details.needs_governance) {
+            if (!details) {
+                return;
+            }
+
+            promptedUploads[attachmentId] = true;
+
+            if (!details.needs_governance) {
                 return;
             }
 
@@ -263,6 +268,31 @@
                     waitForUploadedAttachmentId(attachment);
                 });
             }
+        });
+    }
+
+    function watchRestMediaUploads() {
+        if (apiFetchWatcherBound || !window.wp || !window.wp.apiFetch || !window.wp.apiFetch.use) {
+            return;
+        }
+
+        apiFetchWatcherBound = true;
+
+        window.wp.apiFetch.use(function (options, next) {
+            var requestOptions = options || {};
+            var path = requestOptions.path || '';
+            var url = requestOptions.url || '';
+            var method = String(requestOptions.method || 'GET').toUpperCase();
+            var normalizedPath = String(path).replace(/^\/+/, '');
+            var isMediaCreate = 'POST' === method && (normalizedPath.indexOf('wp/v2/media') === 0 || String(url).indexOf('/wp/v2/media') !== -1);
+
+            return next(options).then(function (response) {
+                if (isMediaCreate && response && response.id && (!response.mime_type || String(response.mime_type).indexOf('image/') === 0)) {
+                    maybeOpenGovernanceModalForUpload(parseInt(response.id, 10));
+                }
+
+                return response;
+            });
         });
     }
 
@@ -571,6 +601,7 @@
 
     $(function () {
         setupMediaModalFilters();
+        watchRestMediaUploads();
         setupCollectionDraggables();
         bindCollectionAssignment();
         bindGovernanceModal();
@@ -580,6 +611,7 @@
 
         window.setInterval(function () {
             setupCollectionDraggables();
+            watchRestMediaUploads();
             watchNewUploads();
             pollPendingUploads();
         }, 1500);
