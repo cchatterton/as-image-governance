@@ -35,8 +35,13 @@
             var collectionName = $.trim($collection.text());
             $target.addClass('asig-collection-assigned');
             $collection.addClass('asig-collection-assigned-target');
-            updateCollectionCell(attachmentId, collectionName);
-            $('.asig-assignment-status').text(window.ASIG.strings.assignedTo.replace('%s', collectionName));
+            if (String(collectionId) === '0') {
+                clearCollectionCell(attachmentId);
+                $('.asig-assignment-status').text(window.ASIG.strings.removedFromTerms);
+            } else {
+                updateCollectionCell(attachmentId, collectionName);
+                $('.asig-assignment-status').text(window.ASIG.strings.assignedTo.replace('%s', collectionName));
+            }
             window.setTimeout(function () {
                 $target.removeClass('asig-collection-assigned');
                 $collection.removeClass('asig-collection-assigned-target');
@@ -58,6 +63,10 @@
         }
 
         $cell.text(currentText + ', ' + collectionName);
+    }
+
+    function clearCollectionCell(attachmentId) {
+        $('#post-' + attachmentId + ' .column-asig_collections').text('—');
     }
 
     function getAttachmentIdFromElement(element) {

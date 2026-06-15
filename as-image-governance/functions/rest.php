@@ -87,6 +87,18 @@ function asig_rest_assign_collection(WP_REST_Request $request): WP_REST_Response
         return new WP_Error('asig_invalid_attachment', __('Attachment must be an image.', 'as-image-governance'), array('status' => 400));
     }
 
+    if (0 === $collection_id) {
+        wp_set_object_terms($attachment_id, array(), 'ig_collection', false);
+
+        return rest_ensure_response(
+            array(
+                'attachment_id' => $attachment_id,
+                'collection_id' => 0,
+                'message'       => __('Image removed from collections.', 'as-image-governance'),
+            )
+        );
+    }
+
     $term = get_term($collection_id, 'ig_collection');
 
     if (!$term || is_wp_error($term)) {

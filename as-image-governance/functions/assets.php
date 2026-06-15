@@ -56,6 +56,7 @@ function asig_enqueue_admin_assets(string $hook): void
                 'dismiss'          => __('Dismiss', 'as-image-governance'),
                 'saved'            => __('Governance details saved.', 'as-image-governance'),
                 'assignedTo'       => __('Assigned to %s.', 'as-image-governance'),
+                'removedFromTerms' => __('Removed from collections.', 'as-image-governance'),
                 'createCollection' => __('Create collections under Manage Collections.', 'as-image-governance'),
             ),
         )

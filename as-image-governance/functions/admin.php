@@ -143,24 +143,45 @@ function asig_render_media_library_governance_panel(): void
     }
 
     $collections = asig_get_collection_options();
+    $current_collection = isset($_GET['asig_collection']) ? absint($_GET['asig_collection']) : 0;
+    $current_mode = isset($_GET['mode']) ? sanitize_key(wp_unslash($_GET['mode'])) : get_user_option('media_library_mode', get_current_user_id());
+    $current_mode = in_array($current_mode, array('grid', 'list'), true) ? $current_mode : 'grid';
+    $all_media_url = add_query_arg(array('mode' => $current_mode), admin_url('upload.php'));
     ?>
     <div class="notice asig-media-governance-panel">
         <div class="asig-media-governance-panel__collections" aria-label="<?php esc_attr_e('Collection drop targets', 'as-image-governance'); ?>">
+            <button
+                type="button"
+                class="button asig-collection-drop-target <?php echo 0 === $current_collection ? 'is-active' : ''; ?>"
+                data-collection-id="0"
+                data-filter-url="<?php echo esc_url($all_media_url); ?>"
+                aria-pressed="<?php echo 0 === $current_collection ? 'true' : 'false'; ?>"
+            >
+                <?php esc_html_e('All Media', 'as-image-governance'); ?>
+            </button>
             <?php if ($collections) : ?>
                 <?php foreach ($collections as $collection) : ?>
+                    <?php
+                    $filter_url = add_query_arg(
+                        array(
+                            'mode'            => $current_mode,
+                            'asig_collection' => (int) $collection['id'],
+                        ),
+                        admin_url('upload.php')
+                    );
+                    ?>
                     <button
                         type="button"
-                        class="button asig-collection-drop-target"
+                        class="button asig-collection-drop-target <?php echo $current_collection === (int) $collection['id'] ? 'is-active' : ''; ?>"
                         data-collection-id="<?php echo esc_attr((string) $collection['id']); ?>"
-                        data-filter-url="<?php echo esc_url(add_query_arg(array('mode' => 'list', 'asig_collection' => (int) $collection['id']), admin_url('upload.php'))); ?>"
+                        data-filter-url="<?php echo esc_url($filter_url); ?>"
+                        aria-pressed="<?php echo $current_collection === (int) $collection['id'] ? 'true' : 'false'; ?>"
                     >
                         <?php echo esc_html($collection['name']); ?>
                     </button>
                 <?php endforeach; ?>
-                <span class="asig-assignment-status" aria-live="polite"></span>
-            <?php else : ?>
-                <span class="asig-assignment-status"></span>
             <?php endif; ?>
+            <span class="asig-assignment-status" aria-live="polite"></span>
         </div>
     </div>
     <?php

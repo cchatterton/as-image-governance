@@ -2,6 +2,13 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.9 - 2026-06-15
+
+- Added an All Media collection control as the first Media Library term.
+- Preserved the current Media Library mode when filtering by collection terms.
+- Highlighted the active collection filter, including All Media when no collection filter is active.
+- Made dropping an image onto All Media remove its collection terms.
+
 ## 0.1.8 - 2026-06-15
 
 - Removed the governance modal close icon and dismiss button.

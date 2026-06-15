@@ -90,6 +90,12 @@
     box-shadow: 0 0 0 1px #2271b1;
 }
 
+.asig-collection-drop-target.is-active {
+    background: #1d2327;
+    border-color: #1d2327;
+    color: #fff;
+}
+
 .asig-collection-assigned-target {
     background: #edfaef !important;
     border-color: #00a32a !important;
