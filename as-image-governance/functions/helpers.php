@@ -68,11 +68,32 @@ function asig_get_settings(): array
 
 function asig_get_recount_url(): string
 {
+    $host = isset($_SERVER['HTTP_HOST']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'])) : '';
+    $uri = isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '';
+    $redirect_url = $host && $uri ? set_url_scheme('http://' . $host . $uri) : admin_url('upload.php');
+
     return wp_nonce_url(
-        admin_url('admin-post.php?action=asig_scan_usage'),
+        add_query_arg(
+            array(
+                'action'      => 'asig_scan_usage',
+                'redirect_to' => $redirect_url,
+            ),
+            admin_url('admin-post.php')
+        ),
         'asig_scan_usage',
         'asig_scan_usage_nonce'
     );
+}
+
+function asig_get_post_type_label($post_type): string
+{
+    $post_type_object = get_post_type_object((string) $post_type);
+
+    if ($post_type_object && isset($post_type_object->labels->singular_name)) {
+        return (string) $post_type_object->labels->singular_name;
+    }
+
+    return (string) $post_type;
 }
 
 function asig_update_settings(array $settings): void

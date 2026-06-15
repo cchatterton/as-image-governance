@@ -2,6 +2,14 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.3 - 2026-06-15
+
+- Limited the governance modal to newly uploaded images only.
+- Removed modal triggers from existing image selection, bulk selection, and image detail viewing.
+- Removed the separate Tools scanner page and kept recounting as a Media Library action.
+- Added post type labels to image usage output.
+- Added clearer collection drop targets and an Assign Selected fallback control.
+
 ## 0.1.2 - 2026-06-15
 
 - Improved GitHub update detection on the WordPress Plugins screen.

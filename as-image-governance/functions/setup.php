@@ -293,6 +293,7 @@ function asig_render_attribution_details(): string
             $rows[] = array(
                 'attachment_id' => (int) $attachment_id,
                 'usage_type'    => (string) ($item['usage_type'] ?? ''),
+                'post_type'     => asig_get_post_type_label($item['post_type'] ?? $post->post_type),
                 'source'        => (string) get_post_meta((int) $attachment_id, '_ig_source', true),
                 'attribution'   => $attribution,
             );
@@ -313,6 +314,7 @@ function asig_render_attribution_details(): string
                 </div>
                 <div class="asig-attribution-content">
                     <p><strong><?php esc_html_e('Used on:', 'as-image-governance'); ?></strong> <?php echo esc_html(get_the_title($post)); ?></p>
+                    <p><strong><?php esc_html_e('Post type:', 'as-image-governance'); ?></strong> <?php echo esc_html($row['post_type']); ?></p>
                     <p><strong><?php esc_html_e('Usage:', 'as-image-governance'); ?></strong> <?php echo esc_html($row['usage_type']); ?></p>
                     <p><strong><?php esc_html_e('Source:', 'as-image-governance'); ?></strong> <?php echo esc_html($row['source']); ?></p>
                     <p><strong><?php esc_html_e('Attribution:', 'as-image-governance'); ?></strong> <?php echo esc_html($row['attribution']); ?></p>

@@ -22,6 +22,18 @@
     align-items: center;
 }
 
+.asig-drop-help {
+    font-weight: 600;
+}
+
+.asig-draggable-image {
+    cursor: grab;
+}
+
+.asig-draggable-image:active {
+    cursor: grabbing;
+}
+
 .asig-usage-list {
     margin: 6px 0 0;
 }
@@ -38,6 +50,7 @@
 }
 
 .asig-collection-drop-target.asig-drop-active {
+    background: #f0f6fc;
     border-color: #2271b1;
     box-shadow: 0 0 0 1px #2271b1;
 }

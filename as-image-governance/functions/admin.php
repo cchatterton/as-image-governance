@@ -31,13 +31,6 @@ function asig_register_admin_pages(): void
         'asig_render_settings_page'
     );
 
-    add_management_page(
-        __('Image Governance', 'as-image-governance'),
-        __('Image Governance', 'as-image-governance'),
-        'upload_files',
-        'as-image-governance-tools',
-        'asig_render_tools_page'
-    );
 }
 
 function asig_handle_settings_save(): void
@@ -139,24 +132,6 @@ function asig_render_settings_page(): void
     <?php
 }
 
-function asig_render_tools_page(): void
-{
-    if (!current_user_can('upload_files')) {
-        wp_die(esc_html__('You do not have permission to access this page.', 'as-image-governance'));
-    }
-    ?>
-    <div class="wrap asig-admin-wrap">
-        <h1><?php esc_html_e('Image Governance Usage Scanner', 'as-image-governance'); ?></h1>
-        <p><?php esc_html_e('Rebuild image usage data from featured images, inline images, and galleries.', 'as-image-governance'); ?></p>
-        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-            <input type="hidden" name="action" value="asig_scan_usage">
-            <?php wp_nonce_field('asig_scan_usage', 'asig_scan_usage_nonce'); ?>
-            <?php submit_button(__('Scan Usage', 'as-image-governance')); ?>
-        </form>
-    </div>
-    <?php
-}
-
 function asig_render_media_library_governance_panel(): void
 {
     $screen = get_current_screen();
@@ -175,11 +150,20 @@ function asig_render_media_library_governance_panel(): void
         </div>
         <div class="asig-media-governance-panel__collections" aria-label="<?php esc_attr_e('Collection drop targets', 'as-image-governance'); ?>">
             <?php if ($collections) : ?>
+                <span class="asig-drop-help"><?php esc_html_e('Drag rows or tiles onto a collection:', 'as-image-governance'); ?></span>
                 <?php foreach ($collections as $collection) : ?>
                     <button type="button" class="button asig-collection-drop-target" data-collection-id="<?php echo esc_attr((string) $collection['id']); ?>">
                         <?php echo esc_html($collection['name']); ?>
                     </button>
                 <?php endforeach; ?>
+                <label class="screen-reader-text" for="asig-selected-collection"><?php esc_html_e('Collection for selected images', 'as-image-governance'); ?></label>
+                <select id="asig-selected-collection">
+                    <option value=""><?php esc_html_e('Choose collection', 'as-image-governance'); ?></option>
+                    <?php foreach ($collections as $collection) : ?>
+                        <option value="<?php echo esc_attr((string) $collection['id']); ?>"><?php echo esc_html($collection['name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="button" class="button asig-assign-selected"><?php esc_html_e('Assign Selected', 'as-image-governance'); ?></button>
             <?php else : ?>
                 <span><?php esc_html_e('Create collections, then drag image tiles or rows onto them.', 'as-image-governance'); ?></span>
             <?php endif; ?>
@@ -236,8 +220,9 @@ function asig_render_attachment_usage_details(int $post_id): void
         }
 
         printf(
-            '<li>%s: <a href="%s">%s</a> <a href="%s">%s</a></li>',
+            '<li>%s, %s: <a href="%s">%s</a> <a href="%s">%s</a></li>',
             esc_html((string) ($item['usage_type'] ?? '')),
+            esc_html(asig_get_post_type_label($item['post_type'] ?? get_post_type($used_post_id))),
             esc_url(get_edit_post_link($used_post_id, '')),
             esc_html(get_the_title($used_post_id)),
             esc_url(get_permalink($used_post_id)),
@@ -404,7 +389,9 @@ function asig_handle_usage_scan(): void
 
     $result = asig_scan_usage();
 
-    wp_safe_redirect(add_query_arg(array('asig_notice' => 'scan_complete', 'asig_usage_count' => $result['usage_count']), admin_url('tools.php?page=as-image-governance-tools')));
+    $redirect_to = isset($_GET['redirect_to']) ? esc_url_raw(wp_unslash($_GET['redirect_to'])) : admin_url('upload.php');
+
+    wp_safe_redirect(add_query_arg(array('asig_notice' => 'scan_complete', 'asig_usage_count' => $result['usage_count']), $redirect_to));
     exit;
 }
 

@@ -14,7 +14,7 @@ add_action('wp_enqueue_scripts', 'asig_enqueue_frontend_assets');
 
 function asig_enqueue_admin_assets(string $hook): void
 {
-    if (!in_array($hook, array('upload.php', 'media.php', 'settings_page_as-image-governance', 'tools_page_as-image-governance-tools', 'edit-tags.php'), true)) {
+    if (!in_array($hook, array('upload.php', 'media-new.php', 'media.php', 'post.php', 'post-new.php', 'settings_page_as-image-governance', 'edit-tags.php'), true)) {
         return;
     }
 

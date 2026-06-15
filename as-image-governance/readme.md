@@ -1,7 +1,7 @@
 # Image Governance
 
 Author: AlphaSys  
-Version: 0.1.2  
+Version: 0.1.3  
 Status: MVP  
 
 ## Purpose
@@ -14,12 +14,13 @@ Image Governance helps WordPress site owners record where images came from, what
 - Media Library columns and filters for governance review.
 - Flat image collections using the `ig_collection` attachment taxonomy.
 - Bulk authority and collection assignment in the Media Library.
-- Manual usage scanner for featured images, inline images, galleries, pages, posts, and public custom post types.
+- Media Library usage recount for featured images, inline images, galleries, pages, posts, and public custom post types.
 - Settings page for attribution display and scanner behavior.
 - Frontend attribution page output for a referring page.
 - Optional footer attribution link when the current page has attributed images.
-- Media-modal intervention when selected images are missing governance details.
+- Media-modal intervention when newly uploaded images are missing governance details.
 - Visible Recount Usage and collection drop targets in the Media Library.
+- Governance intervention appears for newly uploaded images only.
 
 ## Folder Structure
 
