@@ -2,6 +2,11 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.12 - 2026-06-15
+
+- Fixed updater behavior so failed or invalid GitHub release lookups no longer write a false `no_update` result.
+- Preserved existing WordPress update transient data when the GitHub release state is unknown.
+
 ## 0.1.11 - 2026-06-15
 
 - Added Image Governance filters to the WordPress media selection modal.

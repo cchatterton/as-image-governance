@@ -39,6 +39,11 @@ final class ASIG_GitHub_Updater
         $transient->response = isset($transient->response) && is_array($transient->response) ? $transient->response : array();
         $transient->no_update = isset($transient->no_update) && is_array($transient->no_update) ? $transient->no_update : array();
         $release = self::get_latest_release();
+
+        if (!self::is_valid_release($release)) {
+            return $transient;
+        }
+
         $update = self::build_update_object($release, $plugin_file);
 
         if ($update) {
@@ -69,7 +74,7 @@ final class ASIG_GitHub_Updater
         }
 
         $release = self::get_latest_release();
-        $version = self::get_release_version($release) ?: ASIG_VERSION;
+        $version = self::is_valid_release($release) ? self::get_release_version($release) : ASIG_VERSION;
         $download_url = self::get_release_asset_url($release);
         $body = is_array($release) ? (string) ($release['body'] ?? '') : '';
 
@@ -150,14 +155,14 @@ final class ASIG_GitHub_Updater
 
         if (is_wp_error($response) || 200 !== wp_remote_retrieve_response_code($response)) {
             set_site_transient(self::RELEASE_TRANSIENT, array('asig_error' => true), 30 * MINUTE_IN_SECONDS);
-            return array();
+            return false;
         }
 
         $release = json_decode(wp_remote_retrieve_body($response), true);
 
         if (!is_array($release)) {
             set_site_transient(self::RELEASE_TRANSIENT, array('asig_error' => true), 30 * MINUTE_IN_SECONDS);
-            return array();
+            return false;
         }
 
         $version = self::get_release_version($release);
@@ -182,6 +187,14 @@ final class ASIG_GitHub_Updater
         }
 
         return ltrim((string) ($release['tag_name'] ?? ''), 'vV');
+    }
+
+    private static function is_valid_release($release): bool
+    {
+        return is_array($release)
+            && empty($release['asig_error'])
+            && '' !== self::get_release_version($release)
+            && '' !== self::get_release_asset_url($release);
     }
 
     private static function is_usable_cached_release(array $release): bool
