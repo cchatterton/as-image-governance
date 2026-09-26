@@ -1,5 +1,5 @@
 .asig-admin-wrap .form-table td {
-    max-width: 760px;
+    max-width: 47.5rem;
 }
 
 .media-modal .media-toolbar-secondary {
@@ -16,14 +16,14 @@
 
 .asig-media-governance-panel {
     display: block;
-    padding: 12px;
+    padding: 0.75rem;
 }
 
 .asig-media-governance-panel__main,
 .asig-media-governance-panel__collections {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 0.5rem;
     align-items: center;
 }
 
@@ -32,7 +32,7 @@
 }
 
 .asig-assignment-status {
-    min-width: 160px;
+    min-width: 10rem;
     color: #008a20;
     font-weight: 600;
 }
@@ -57,8 +57,8 @@
 
 .asig-recount-link {
     display: inline-flex;
-    width: 20px;
-    height: 20px;
+    width: 1.25rem;
+    height: 1.25rem;
     align-items: center;
     justify-content: center;
     vertical-align: middle;
@@ -71,31 +71,31 @@
 }
 
 .asig-recount-link .dashicons {
-    width: 16px;
-    height: 16px;
-    font-size: 16px;
-    line-height: 16px;
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+    line-height: 1rem;
 }
 
 .asig-usage-list {
-    margin: 6px 0 0;
+    margin: 0.375rem 0 0;
 }
 
 .asig-usage-list li {
-    margin: 0 0 4px;
+    margin: 0 0 0.25rem;
 }
 
 .asig-collection-drop-panel {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin: 10px 0;
+    gap: 0.5rem;
+    margin: 0.625rem 0;
 }
 
 .asig-collection-drop-target.asig-drop-active {
     background: #f0f6fc;
     border-color: #2271b1;
-    box-shadow: 0 0 0 1px #2271b1;
+    box-shadow: 0 0 0 0.0625rem #2271b1;
 }
 
 .asig-collection-drop-target.is-active {
@@ -107,17 +107,17 @@
 .asig-collection-assigned-target {
     background: #edfaef !important;
     border-color: #00a32a !important;
-    box-shadow: 0 0 0 1px #00a32a !important;
+    box-shadow: 0 0 0 0.0625rem #00a32a !important;
 }
 
 .asig-collection-assigned {
-    outline: 3px solid #00a32a;
-    outline-offset: -3px;
+    outline: 0.1875rem solid #00a32a;
+    outline-offset: -0.1875rem;
 }
 
 .asig-attachment-collections {
     display: grid;
-    gap: 6px;
+    gap: 0.375rem;
 }
 
 .asig-governance-modal {
@@ -126,19 +126,19 @@
     inset: 0;
     display: grid;
     place-items: center;
-    padding: 24px;
+    padding: 1.5rem;
     background: rgba(0, 0, 0, 0.45);
 }
 
 .asig-governance-modal__panel {
     position: relative;
-    width: min(640px, 100%);
-    max-height: calc(100vh - 48px);
+    width: min(40rem, 100%);
+    max-height: calc(100vh - 3rem);
     overflow: auto;
-    padding: 24px;
+    padding: 1.5rem;
     background: #fff;
-    border: 1px solid #c3c4c7;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+    border: 0.0625rem solid #c3c4c7;
+    box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.25);
 }
 
 .asig-governance-modal h2 {
@@ -148,8 +148,8 @@
 .asig-governance-modal label,
 .asig-governance-modal fieldset {
     display: grid;
-    gap: 6px;
-    margin: 0 0 14px;
+    gap: 0.375rem;
+    margin: 0 0 0.875rem;
     font-weight: 600;
 }
 
@@ -163,21 +163,21 @@
 
 .asig-governance-modal fieldset label {
     display: block;
-    margin: 0 0 6px;
+    margin: 0 0 0.375rem;
     font-weight: 400;
 }
 
 .asig-field-label {
     display: inline-flex;
-    gap: 6px;
+    gap: 0.375rem;
     align-items: center;
 }
 
 .asig-field-help {
     position: relative;
     display: inline-flex;
-    width: 20px;
-    height: 20px;
+    width: 1.25rem;
+    height: 1.25rem;
     align-items: center;
     justify-content: center;
     color: #2271b1;
@@ -185,22 +185,22 @@
 }
 
 .asig-field-help .dashicons {
-    width: 16px;
-    height: 16px;
-    font-size: 16px;
-    line-height: 16px;
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+    line-height: 1rem;
 }
 
 .asig-field-help__tip {
     position: absolute;
     z-index: 2;
-    bottom: calc(100% + 8px);
+    bottom: calc(100% + 0.5rem);
     left: 0;
     display: none;
-    width: min(300px, calc(100vw - 72px));
-    max-width: calc(100vw - 72px);
-    padding: 8px 10px;
-    border-radius: 4px;
+    width: min(18.75rem, calc(100vw - 4.5rem));
+    max-width: calc(100vw - 4.5rem);
+    padding: 0.5rem 0.625rem;
+    border-radius: 0.25rem;
     background: #1d2327;
     color: #fff;
     font-weight: 400;
@@ -216,23 +216,23 @@
 .asig-field-help__tip::after {
     position: absolute;
     top: 100%;
-    left: 6px;
+    left: 0.375rem;
     width: 0;
     height: 0;
-    border: 6px solid transparent;
+    border: 0.375rem solid transparent;
     border-top-color: #1d2327;
     content: "";
 }
 
 .asig-governance-modal__actions {
     display: flex;
-    gap: 8px;
+    gap: 0.5rem;
     align-items: center;
 }
 
 .asig-governance-modal__status,
 .asig-modal-note {
-    margin: 8px 0 0;
+    margin: 0.5rem 0 0;
 }
 
 .asig-attribution-list {
@@ -241,22 +241,22 @@
 
 .asig-attribution-item {
     display: grid;
-    grid-template-columns: 96px minmax(0, 1fr);
-    gap: 16px;
-    margin: 0 0 20px;
-    padding: 0 0 20px;
-    border-bottom: 1px solid currentColor;
+    grid-template-columns: 6rem minmax(0, 1fr);
+    gap: 1rem;
+    margin: 0 0 1.25rem;
+    padding: 0 0 1.25rem;
+    border-bottom: 0.0625rem solid currentColor;
 }
 
 .asig-attribution-thumb img {
     display: block;
-    width: 96px;
-    height: 96px;
+    width: 6rem;
+    height: 6rem;
     object-fit: cover;
 }
 
 .asig-attribution-content p {
-    margin: 0 0 6px;
+    margin: 0 0 0.375rem;
 }
 
 .asig-footer-attribution-link {
@@ -264,7 +264,7 @@
     text-align: center;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 37.5rem) {
     .asig-media-governance-panel {
         grid-template-columns: 1fr;
     }

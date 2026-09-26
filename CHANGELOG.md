@@ -2,6 +2,13 @@
 
 All notable changes to Image Governance are recorded here.
 
+## 0.1.19 - 2026-09-26
+
+- Align WordPress 7.0 / PHP 7.4 metadata, GPL/readme packaging and project-authored CSS units with current Codex standards.
+- Require edit permission for the specific attachment in governance REST requests. Remove PHP 8-only type declarations for the PHP 7.4 baseline.
+- Remove independent GitHub update checks and delegate updates to AlphaSys Update Controller. Keep Beta readiness and existing feature settings, package identity and domain restrictions.
+- Standardise update headers and controller-aware Install/Activate/Check links.
+
 ## 0.1.18 - 2026-06-15
 
 - Stopped storing failed GitHub lookups in the release cache used for update checks.

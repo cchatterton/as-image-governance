@@ -73,12 +73,13 @@ function asig_register_rest_routes(): void
     );
 }
 
-function asig_rest_upload_permission(): bool
+function asig_rest_upload_permission(WP_REST_Request $request): bool
 {
-    return current_user_can('upload_files');
+    $attachment_id = (int) $request->get_param('attachment_id');
+    return current_user_can('upload_files') && (!$attachment_id || current_user_can('edit_post', $attachment_id));
 }
 
-function asig_rest_assign_collection(WP_REST_Request $request): WP_REST_Response|WP_Error
+function asig_rest_assign_collection(WP_REST_Request $request)
 {
     $attachment_id = (int) $request->get_param('attachment_id');
     $collection_id = (int) $request->get_param('collection_id');
@@ -116,7 +117,7 @@ function asig_rest_assign_collection(WP_REST_Request $request): WP_REST_Response
     );
 }
 
-function asig_rest_get_attachment_governance(WP_REST_Request $request): WP_REST_Response|WP_Error
+function asig_rest_get_attachment_governance(WP_REST_Request $request)
 {
     $attachment_id = (int) $request->get_param('attachment_id');
 
@@ -127,7 +128,7 @@ function asig_rest_get_attachment_governance(WP_REST_Request $request): WP_REST_
     return rest_ensure_response(asig_prepare_attachment_governance_response($attachment_id));
 }
 
-function asig_rest_save_attachment_governance(WP_REST_Request $request): WP_REST_Response|WP_Error
+function asig_rest_save_attachment_governance(WP_REST_Request $request)
 {
     $attachment_id = (int) $request->get_param('attachment_id');
 
@@ -153,7 +154,7 @@ function asig_rest_save_attachment_governance(WP_REST_Request $request): WP_REST
     return rest_ensure_response(asig_prepare_attachment_governance_response($attachment_id));
 }
 
-function asig_rest_save_term_names(int $attachment_id, string $taxonomy, mixed $value): void
+function asig_rest_save_term_names(int $attachment_id, string $taxonomy, $value): void
 {
     if (null === $value) {
         return;
@@ -177,7 +178,7 @@ function asig_rest_get_pending_upload(): WP_REST_Response
     while ($pending) {
         $attachment_id = array_shift($pending);
 
-        if (asig_is_image_attachment($attachment_id)) {
+        if (asig_is_image_attachment($attachment_id) && current_user_can('edit_post', $attachment_id)) {
             if ($user_id) {
                 update_user_meta($user_id, 'asig_pending_uploads', $pending);
             }

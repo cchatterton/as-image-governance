@@ -1,7 +1,7 @@
 # Image Governance
 
 Author: AlphaSys  
-Version: 0.1.18  
+Version: 0.1.19<br>
 Status: MVP  
 
 ## Purpose
@@ -62,3 +62,7 @@ as-image-governance/
 - Background scanning for very large sites.
 - Export tools for governance reports.
 - More detailed collection management screens.
+
+## Controller integration — 0.1.19
+
+Remove independent GitHub update checks and delegate updates to AlphaSys Update Controller. Keep Beta readiness and existing feature settings, package identity and domain restrictions. Previous standalone GitHub update instructions are superseded.
